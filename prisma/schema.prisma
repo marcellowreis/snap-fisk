@@ -1,0 +1,86 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TaxRegime {
+  MEI
+  SIMPLES_NACIONAL
+  LUCRO_PRESUMIDO
+  LUCRO_REAL
+}
+
+model User {
+  id             String           @id @default(uuid()) @db.Uuid
+  email          String           @unique
+  fullName       String
+  passwordHash   String?
+  companyId      String?          @db.Uuid
+  company        Company?         @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  guidedIssuances GuidedIssuance[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  @@map("users")
+}
+
+model Company {
+  id              String           @id @default(uuid()) @db.Uuid
+  legalName       String
+  tradeName       String?
+  document        String           @unique
+  taxRegime       TaxRegime
+  users           User[]
+  fiscalRules     FiscalRule[]
+  guidedIssuances GuidedIssuance[]
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@map("companies")
+}
+
+model FiscalRule {
+  id                String            @id @default(uuid()) @db.Uuid
+  companyId         String?           @db.Uuid
+  company           Company?          @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  originUf          String            @db.Char(2)
+  destinationUf     String            @db.Char(2)
+  operation         String
+  purpose           String
+  taxRegime         TaxRegime
+  cfop              String
+  cstCsosn          String
+  icmsApplicable    Boolean
+  ipiApplicable     Boolean
+  observation       String?
+  priority          Int               @default(0)
+  active            Boolean           @default(true)
+  guidedIssuances   GuidedIssuance[]
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([companyId, active])
+  @@index([originUf, destinationUf, operation, purpose, taxRegime, active, priority], map: "fiscal_rule_lookup_idx")
+  @@map("fiscal_rules")
+}
+
+model GuidedIssuance {
+  id            String     @id @default(uuid()) @db.Uuid
+  companyId     String     @db.Uuid
+  company       Company    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  userId        String?    @db.Uuid
+  user          User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  ruleId        String?    @db.Uuid
+  rule          FiscalRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+  inputData     Json
+  engineResult  Json
+  createdAt     DateTime   @default(now())
+
+  @@index([companyId, createdAt])
+  @@index([ruleId])
+  @@map("guided_issuances")
+}
