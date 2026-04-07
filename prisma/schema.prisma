@@ -1,6 +1,185 @@
-User — login com CNPJ e senha
-Company — dados da empresa vinculada ao usuário
-Plan + Subscription — os três planos (Snap One, Ten, MEI)
-BillingCharge — controle de cobranças PIX
-FiscalRule — motor fiscal expandido com todos os campos
-GuidedIssuance — histórico vinculado ao usuário
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── USUÁRIO ────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  cnpj         String   @unique
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  company      Company?
+  subscription Subscription?
+  issuances    GuidedIssuance[]
+
+  @@map("users")
+}
+
+// ─── EMPRESA ────────────────────────────────────────────────────────────────
+
+model Company {
+  id           String   @id @default(uuid())
+  userId       String   @unique
+  razaoSocial  String
+  nomeFantasia String?
+  cnpj         String
+  ie           String?
+  uf           String
+  taxRegime    String
+  email        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("companies")
+}
+
+// ─── PLANOS ─────────────────────────────────────────────────────────────────
+
+model Plan {
+  id          String   @id @default(uuid())
+  code        PlanCode @unique
+  name        String
+  price       Float
+  nfLimit     Int      // -1 = ilimitado
+  description String?
+  createdAt   DateTime @default(now())
+
+  subscriptions Subscription[]
+
+  @@map("plans")
+}
+
+enum PlanCode {
+  SNAP_ONE
+  SNAP_TEN
+  SNAP_MEI
+}
+
+// ─── ASSINATURA ─────────────────────────────────────────────────────────────
+
+model Subscription {
+  id        String             @id @default(uuid())
+  userId    String             @unique
+  planId    String
+  status    SubscriptionStatus @default(PENDING)
+  nfUsed    Int                @default(0)
+  startDate DateTime?
+  endDate   DateTime?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  plan      Plan               @relation(fields: [planId], references: [id])
+  charges   BillingCharge[]
+
+  @@map("subscriptions")
+}
+
+enum SubscriptionStatus {
+  PENDING
+  ACTIVE
+  EXPIRED
+  CANCELED
+}
+
+// ─── COBRANÇA ───────────────────────────────────────────────────────────────
+
+model BillingCharge {
+  id             String        @id @default(uuid())
+  subscriptionId String
+  amount         Float
+  status         ChargeStatus  @default(PENDING)
+  pixCode        String?
+  paidAt         DateTime?
+  expiresAt      DateTime?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  subscription   Subscription  @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@map("billing_charges")
+}
+
+enum ChargeStatus {
+  PENDING
+  PAID
+  EXPIRED
+  CANCELED
+}
+
+// ─── MOTOR FISCAL ───────────────────────────────────────────────────────────
+
+model FiscalRule {
+  id                      String   @id @default(uuid())
+  originUf                String?
+  destinationUf           String?
+  operation               String?
+  purpose                 String?
+  taxRegime               String?
+  active                  Boolean  @default(true)
+  priority                Int      @default(0)
+  cfop                    String
+  cstCsosn                String
+  icmsApplicable          Boolean
+  ipiApplicable           Boolean
+  observation             String?
+  naturezaOperacao        String?
+  cfopEntradaVinculado    String?
+  geraCredito             Boolean  @default(false)
+  temST                   Boolean  @default(false)
+  informacoesComplementares String?
+  baseLegal               String?
+  mensagemAlerta          String?
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  guidedIssuances GuidedIssuance[]
+
+  @@index([active, originUf, destinationUf, operation, purpose, taxRegime])
+  @@map("fiscal_rules")
+}
+
+// ─── HISTÓRICO DE ORIENTAÇÕES ───────────────────────────────────────────────
+
+model GuidedIssuance {
+  id                        String   @id @default(uuid())
+  userId                    String?
+  originUf                  String
+  destinationUf             String
+  operation                 String
+  purpose                   String
+  taxRegime                 String
+  ruleId                    String?
+  cfop                      String?
+  cstCsosn                  String?
+  icmsApplicable            Boolean?
+  ipiApplicable             Boolean?
+  observation               String?
+  naturezaOperacao          String?
+  cfopEntradaVinculado      String?
+  geraCredito               Boolean?
+  temST                     Boolean?
+  informacoesComplementares String?
+  baseLegal                 String?
+  mensagemAlerta            String?
+  createdAt                 DateTime @default(now())
+
+  user User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  rule FiscalRule? @relation(fields: [ruleId], references: [id], onDelete: SetNull)
+
+  @@index([createdAt])
+  @@index([userId])
+  @@index([ruleId])
+  @@map("guided_issuance")
+}
