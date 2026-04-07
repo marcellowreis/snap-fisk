@@ -15,6 +15,13 @@ export type FiscalEngineResult = {
   icmsApplicable: boolean | null;
   ipiApplicable: boolean | null;
   observation: string | null;
+  naturezaOperacao: string | null;
+  cfopEntradaVinculado: string | null;
+  geraCredito: boolean | null;
+  temST: boolean | null;
+  informacoesComplementares: string | null;
+  baseLegal: string | null;
+  mensagemAlerta: string | null;
   ruleId: string | null;
 };
 
@@ -30,6 +37,7 @@ const specificityScore = (rule: FiscalRule): number => {
 
 export const resolveFiscalRule = async (
   input: FiscalInput,
+  userId?: string,
 ): Promise<FiscalEngineResult> => {
   const where: Prisma.FiscalRuleWhereInput = {
     active: true,
@@ -66,6 +74,13 @@ export const resolveFiscalRule = async (
         icmsApplicable: bestRule.icmsApplicable,
         ipiApplicable: bestRule.ipiApplicable,
         observation: bestRule.observation,
+        naturezaOperacao: bestRule.naturezaOperacao,
+        cfopEntradaVinculado: bestRule.cfopEntradaVinculado,
+        geraCredito: bestRule.geraCredito,
+        temST: bestRule.temST,
+        informacoesComplementares: bestRule.informacoesComplementares,
+        baseLegal: bestRule.baseLegal,
+        mensagemAlerta: bestRule.mensagemAlerta,
         ruleId: bestRule.id,
       }
     : {
@@ -74,11 +89,19 @@ export const resolveFiscalRule = async (
         icmsApplicable: null,
         ipiApplicable: null,
         observation: 'Nenhuma regra fiscal ativa compatível encontrada.',
+        naturezaOperacao: null,
+        cfopEntradaVinculado: null,
+        geraCredito: null,
+        temST: null,
+        informacoesComplementares: null,
+        baseLegal: null,
+        mensagemAlerta: null,
         ruleId: null,
       };
 
   await prisma.guidedIssuance.create({
     data: {
+      userId: userId ?? null,
       originUf: input.originUf,
       destinationUf: input.destinationUf,
       operation: input.operation,
@@ -90,6 +113,13 @@ export const resolveFiscalRule = async (
       icmsApplicable: result.icmsApplicable,
       ipiApplicable: result.ipiApplicable,
       observation: result.observation,
+      naturezaOperacao: result.naturezaOperacao,
+      cfopEntradaVinculado: result.cfopEntradaVinculado,
+      geraCredito: result.geraCredito,
+      temST: result.temST,
+      informacoesComplementares: result.informacoesComplementares,
+      baseLegal: result.baseLegal,
+      mensagemAlerta: result.mensagemAlerta,
     },
   });
 
