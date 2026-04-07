@@ -286,9 +286,9 @@ app.post('/api/billing/pix', authenticate, async (req, res) => {
 
 // Consultar status da cobrança
 app.get('/api/billing/:chargeId/status', authenticate, async (req, res) => {
+  const chargeId = String(req.params.chargeId);
   const charge = await prisma.billingCharge.findUnique({
-    where: { id: req.params.chargeId },
-    include: { subscription: true },
+    where: { id: chargeId },
   });
 
   if (!charge) return res.status(404).json({ error: 'Cobrança não encontrada.' });
@@ -307,9 +307,10 @@ app.get('/api/billing/:chargeId/status', authenticate, async (req, res) => {
 
 // Confirmar pagamento (webhook simulado para MVP)
 app.post('/api/billing/:chargeId/confirm', authenticate, async (req, res) => {
+  const chargeId = String(req.params.chargeId);
+
   const charge = await prisma.billingCharge.findUnique({
-    where: { id: req.params.chargeId },
-    include: { subscription: { include: { plan: true } } },
+    where: { id: chargeId },
   });
 
   if (!charge) return res.status(404).json({ error: 'Cobrança não encontrada.' });
@@ -317,8 +318,15 @@ app.post('/api/billing/:chargeId/confirm', authenticate, async (req, res) => {
     return res.status(400).json({ error: 'Cobrança não está pendente.' });
   }
 
+  const subscription = await prisma.subscription.findUnique({
+    where: { id: charge.subscriptionId },
+    include: { plan: true },
+  });
+
+  if (!subscription) return res.status(404).json({ error: 'Assinatura não encontrada.' });
+
   const now = new Date();
-  const plan = charge.subscription.plan;
+  const plan = subscription.plan;
 
   // Calcula validade
   const endDate = plan.code === 'SNAP_ONE'
