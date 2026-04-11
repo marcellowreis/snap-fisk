@@ -167,9 +167,9 @@ const formatCnpj = (v: string) =>
 const formatCep = (v: string) =>
   v.replace(/\D/g, '').slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2');
 
-type Props = { user: User; onBack: () => void };
+type Props = { user: User; fiscalContext?: import('../App').FiscalContext | null; onBack: () => void };
 
-export default function Emit({ user, onBack }: Props) {
+export default function Emit({ user, fiscalContext, onBack }: Props) {
   const company = user.company;
 
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -184,9 +184,17 @@ export default function Emit({ user, onBack }: Props) {
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
   const [tpNF, setTpNF] = useState<'0' | '1'>('1');
-  const [operation, setOperation] = useState('');
-  const [purpose, setPurpose] = useState('');
-  const [fiscalResult, setFiscalResult] = useState<FiscalResult | null>(null);
+  const [operation, setOperation] = useState(fiscalContext?.operation ?? '');
+  const [purpose, setPurpose] = useState(fiscalContext?.purpose ?? '');
+  const [fiscalResult, setFiscalResult] = useState<FiscalResult | null>(
+    fiscalContext?.cfop ? {
+      cfop: fiscalContext.cfop,
+      cstCsosn: fiscalContext.cstCsosn,
+      naturezaOperacao: fiscalContext.naturezaOperacao,
+      informacoesComplementares: fiscalContext.informacoesComplementares,
+      mensagemAlerta: fiscalContext.mensagemAlerta,
+    } : null
+  );
   const [loadingFiscal, setLoadingFiscal] = useState(false);
 
   const [items, setItems] = useState<Item[]>([newItem()]);
