@@ -418,8 +418,8 @@ app.post('/api/auth/register', async (req, res) => {
   if (!p.success) return res.status(400).json({ error: 'Dados inválidos.', details: p.error.flatten() });
   const { cnpj, email, password } = p.data;
   const cnpjClean = cleanDoc(cnpj);
-  const existing = await prisma.user.findFirst({ where: { OR: [{ cnpj: cnpjClean }, { email }] } });
-  if (existing) return res.status(409).json({ error: 'CNPJ ou e-mail já cadastrado.' });
+  const existing = await prisma.user.findFirst({ where: { cnpj: cnpjClean } });
+  if (existing) return res.status(409).json({ error: 'CNPJ já cadastrado.' });
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({ data: { cnpj: cnpjClean, email, passwordHash } });
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
