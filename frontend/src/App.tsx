@@ -55,11 +55,6 @@ export default function App() {
     setTab('emit');
   };
 
-  const handleEmitDirect = () => {
-    setFiscalContext(null);
-    setTab('emit');
-  };
-
   if (loading) return (
     <div className="auth-page">
       <div className="auth-logo">Snap Fisk</div>
@@ -84,7 +79,6 @@ export default function App() {
           <Home
             user={user}
             onNeedPlan={() => setTab('plans')}
-            onEmit={handleEmitDirect}
             onEmitWithContext={handleEmitWithContext}
           />
         )}
@@ -103,10 +97,6 @@ export default function App() {
         <button className={`nav-item ${tab === 'home' ? 'active' : ''}`} onClick={() => setTab('home')}>
           <span className="nav-icon">🔍</span>
           Consultar
-        </button>
-        <button className={`nav-item ${tab === 'emit' ? 'active' : ''}`} onClick={handleEmitDirect}>
-          <span className="nav-icon">📄</span>
-          Emitir NF
         </button>
         <button className={`nav-item ${tab === 'history' ? 'active' : ''}`} onClick={() => setTab('history')}>
           <span className="nav-icon">📂</span>
