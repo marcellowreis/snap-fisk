@@ -12,6 +12,13 @@ type Customer = {
   ie?: string;
   uf?: string;
   xMun?: string;
+  logradouro?: string;
+  numero?: string;
+  bairro?: string;
+  cep?: string;
+  cMun?: string;
+  email?: string;
+  fone?: string;
 };
 
 type Product = {
@@ -28,7 +35,6 @@ type Item = {
   xProd: string;
   ncm: string;
   ncmSugerido?: string;
-  ncmConflito?: boolean;
   cfop: string;
   uCom: string;
   qCom: number;
@@ -46,6 +52,25 @@ type FiscalResult = {
   mensagemAlerta: string | null;
 };
 
+type NewCustomer = {
+  tipoPessoa: 'PF' | 'PJ';
+  cpfCnpj: string;
+  nome: string;
+  ie: string;
+  indIEDest: string;
+  email: string;
+  fone: string;
+  cep: string;
+  logradouro: string;
+  numero: string;
+  bairro: string;
+  xMun: string;
+  cMun: string;
+  uf: string;
+};
+
+// ─── CONSTANTES ──────────────────────────────────────────────────────────────
+
 const OPERATIONS = [
   { value: 'venda', label: 'Venda' },
   { value: 'remessa', label: 'Remessa' },
@@ -60,6 +85,7 @@ const PURPOSES: Record<string, { value: string; label: string }[]> = {
     { value: 'normal', label: 'Venda normal' },
     { value: 'consumidor_final_pf', label: 'Para consumidor final PF' },
     { value: 'interestadual', label: 'Interestadual' },
+    { value: 'consumidor_final_pf_interestadual', label: 'Consumidor final PF — outro estado' },
     { value: 'substituicao_tributaria', label: 'Com Substituição Tributária' },
   ],
   remessa: [
@@ -86,15 +112,32 @@ const PURPOSES: Record<string, { value: string; label: string }[]> = {
 };
 
 const UNIDADES = ['PC', 'UN', 'KG', 'MT', 'LT', 'CX', 'PAR', 'JG', 'SC', 'M2'];
+
 const FORMAS_PAG = [
   { value: '90', label: 'Sem pagamento' },
   { value: '01', label: 'Dinheiro' },
   { value: '03', label: 'Cartão de crédito' },
   { value: '04', label: 'Cartão de débito' },
-  { value: '05', label: 'Crédito loja' },
   { value: '15', label: 'Boleto' },
   { value: '17', label: 'PIX' },
 ];
+
+const emptyCustomer = (): NewCustomer => ({
+  tipoPessoa: 'PF',
+  cpfCnpj: '',
+  nome: '',
+  ie: '',
+  indIEDest: '9',
+  email: '',
+  fone: '',
+  cep: '',
+  logradouro: '',
+  numero: '',
+  bairro: '',
+  xMun: '',
+  cMun: '',
+  uf: '',
+});
 
 const newItem = (): Item => ({
   id: Math.random().toString(36).slice(2),
@@ -109,6 +152,22 @@ const newItem = (): Item => ({
   saveProduct: false,
 });
 
+const formatCpf = (v: string) =>
+  v.replace(/\D/g, '').slice(0, 11)
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+
+const formatCnpj = (v: string) =>
+  v.replace(/\D/g, '').slice(0, 14)
+    .replace(/(\d{2})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1.$2')
+    .replace(/(\d{3})(\d)/, '$1/$2')
+    .replace(/(\d{4})(\d)/, '$1-$2');
+
+const formatCep = (v: string) =>
+  v.replace(/\D/g, '').slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2');
+
 type Props = { user: User; onBack: () => void };
 
 export default function Emit({ user, onBack }: Props) {
@@ -119,8 +178,14 @@ export default function Emit({ user, onBack }: Props) {
   const [customerId, setCustomerId] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
   const [showCustomerList, setShowCustomerList] = useState(false);
+  const [showNewCustomer, setShowNewCustomer] = useState(false);
+  const [newCust, setNewCust] = useState<NewCustomer>(emptyCustomer());
+  const [loadingCnpj, setLoadingCnpj] = useState(false);
+  const [cnpjError, setCnpjError] = useState('');
+  const [savingCustomer, setSavingCustomer] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
-  // Operação / Motor fiscal
+  // Operação
   const [tpNF, setTpNF] = useState<'0' | '1'>('1');
   const [operation, setOperation] = useState('');
   const [purpose, setPurpose] = useState('');
@@ -138,7 +203,7 @@ export default function Emit({ user, onBack }: Props) {
   const [tPag, setTPag] = useState('90');
   const [vPag, setVPag] = useState(0);
 
-  // Estado
+  // Estado geral
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<any>(null);
@@ -149,29 +214,122 @@ export default function Emit({ user, onBack }: Props) {
     api.get('/api/products').then(setProducts).catch(() => {});
   }, []);
 
-  // Consultar motor fiscal
+  // Motor fiscal automático
   useEffect(() => {
     if (!operation || !purpose || !company) return;
     setLoadingFiscal(true);
     api.post('/api/fiscal-engine/query', {
       originUf: company.uf || 'SP',
-      destinationUf: customerId
-        ? customers.find(c => c.id === customerId)?.uf || company.uf || 'SP'
-        : company.uf || 'SP',
+      destinationUf: selectedCustomer?.uf || company.uf || 'SP',
       operation,
       purpose,
       taxRegime: company.taxRegime || 'simples_nacional',
     }).then(data => {
       setFiscalResult(data);
-      // Preencher CFOP nos itens automaticamente
       if (data.cfop) {
-        setItems(prev => prev.map(item => ({ ...item, cfop: data.cfop, csosn: data.cstCsosn || '102' })));
+        setItems(prev => prev.map(i => ({ ...i, cfop: data.cfop, csosn: data.cstCsosn || '102' })));
       }
     }).catch(() => setFiscalResult(null))
       .finally(() => setLoadingFiscal(false));
-  }, [operation, purpose, customerId]);
+  }, [operation, purpose, selectedCustomer]);
 
-  // Sugerir NCM por descrição
+  // ─── BUSCA CNPJ ────────────────────────────────────────────────────────────
+
+  const buscarCnpj = async (cnpj: string) => {
+    const clean = cnpj.replace(/\D/g, '');
+    if (clean.length !== 14) return;
+    setLoadingCnpj(true);
+    setCnpjError('');
+    try {
+      const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${clean}`);
+      if (!res.ok) throw new Error('CNPJ não encontrado');
+      const data = await res.json();
+
+      // Buscar IE via SINTEGRA (simplificado — campo manual para outros estados)
+      setNewCust(prev => ({
+        ...prev,
+        tipoPessoa: 'PJ',
+        cpfCnpj: cnpj,
+        nome: data.razao_social || data.nome_fantasia || '',
+        logradouro: data.logradouro || '',
+        numero: data.numero || '',
+        bairro: data.bairro || '',
+        xMun: data.municipio || '',
+        cMun: data.codigo_municipio_ibge?.toString() || '',
+        uf: data.uf || '',
+        cep: (data.cep || '').replace(/\D/g, '').replace(/(\d{5})(\d)/, '$1-$2'),
+        email: data.email || '',
+        fone: data.ddd_telefone_1 ? data.ddd_telefone_1.replace(/\D/g, '') : '',
+        indIEDest: data.situacao_cadastral === 'ATIVA' ? '1' : '9',
+        ie: '',
+      }));
+    } catch {
+      setCnpjError('CNPJ não encontrado na Receita Federal. Preencha os dados manualmente.');
+    } finally {
+      setLoadingCnpj(false);
+    }
+  };
+
+  // ─── BUSCA CEP ─────────────────────────────────────────────────────────────
+
+  const buscarCep = async (cep: string) => {
+    const clean = cep.replace(/\D/g, '');
+    if (clean.length !== 8) return;
+    try {
+      const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+      const data = await res.json();
+      if (!data.erro) {
+        setNewCust(prev => ({
+          ...prev,
+          logradouro: data.logradouro || prev.logradouro,
+          bairro: data.bairro || prev.bairro,
+          xMun: data.localidade || prev.xMun,
+          cMun: data.ibge || prev.cMun,
+          uf: data.uf || prev.uf,
+        }));
+      }
+    } catch {}
+  };
+
+  // ─── SALVAR CLIENTE ────────────────────────────────────────────────────────
+
+  const handleSaveCustomer = async () => {
+    if (!newCust.cpfCnpj || !newCust.nome) {
+      setCnpjError('CPF/CNPJ e Nome são obrigatórios.');
+      return;
+    }
+    setSavingCustomer(true);
+    try {
+      const saved = await api.post('/api/customers', {
+        ...newCust,
+        cpfCnpj: newCust.cpfCnpj.replace(/\D/g, ''),
+        ie: newCust.ie || undefined,
+        indIEDest: newCust.indIEDest,
+      });
+      setCustomers(prev => [saved, ...prev]);
+      setSelectedCustomer(saved);
+      setCustomerId(saved.id);
+      setCustomerSearch(saved.nome);
+      setShowNewCustomer(false);
+      setNewCust(emptyCustomer());
+      setCnpjError('');
+    } catch (e: any) {
+      setCnpjError(e.message);
+    } finally {
+      setSavingCustomer(false);
+    }
+  };
+
+  const selectCustomer = (c: Customer) => {
+    setCustomerId(c.id);
+    setSelectedCustomer(c);
+    setCustomerSearch(c.nome);
+    setShowCustomerList(false);
+    setShowNewCustomer(false);
+  };
+
+  // ─── PRODUTOS ──────────────────────────────────────────────────────────────
+
   const handleDescricaoChange = (itemId: string, descricao: string) => {
     updateItem(itemId, { xProd: descricao });
     if (ncmTimer.current[itemId]) clearTimeout(ncmTimer.current[itemId]);
@@ -181,27 +339,20 @@ export default function Emit({ user, onBack }: Props) {
         const data = await api.get(`/api/ncm/suggest?descricao=${encodeURIComponent(descricao)}`);
         if (data?.ncm) {
           const item = items.find(i => i.id === itemId);
-          if (!item?.ncm) {
-            updateItem(itemId, { ncm: data.ncm, ncmSugerido: data.ncm });
-          }
+          if (!item?.ncm) updateItem(itemId, { ncm: data.ncm, ncmSugerido: data.ncm });
         }
       } catch {}
     }, 600);
   };
 
-  // Verificar conflito de NCM
   const handleNcmChange = async (itemId: string, ncm: string) => {
     updateItem(itemId, { ncm });
     const item = items.find(i => i.id === itemId);
-    if (!item || !item.xProd || ncm.length < 8) return;
-
+    if (!item || !item.xProd || ncm.replace(/\D/g, '').length < 8) return;
     try {
       const data = await api.get(`/api/ncm/suggest?descricao=${encodeURIComponent(item.xProd)}`);
-      if (data?.ncm && data.ncm !== ncm.replace(/\./g, '')) {
-        setNcmAlerts(prev => ({
-          ...prev,
-          [itemId]: `NCM sugerida para "${item.xProd}" é ${data.ncm} (${data.descricao}). Deseja usar esta?`,
-        }));
+      if (data?.ncm && data.ncm !== ncm.replace(/\D/g, '')) {
+        setNcmAlerts(prev => ({ ...prev, [itemId]: `NCM sugerida para "${item.xProd}": ${data.ncm} — ${data.descricao}` }));
       } else {
         setNcmAlerts(prev => { const n = { ...prev }; delete n[itemId]; return n; });
       }
@@ -218,30 +369,19 @@ export default function Emit({ user, onBack }: Props) {
   };
 
   const selectProduct = (itemId: string, product: Product) => {
-    updateItem(itemId, {
-      productId: product.id,
-      xProd: product.descricao,
-      ncm: product.ncm,
-      uCom: product.unidade,
-      vUnCom: product.valorUnit,
-    });
+    updateItem(itemId, { productId: product.id, xProd: product.descricao, ncm: product.ncm, uCom: product.unidade, vUnCom: product.valorUnit });
     setShowProductList(prev => ({ ...prev, [itemId]: false }));
     setProductSearch(prev => ({ ...prev, [itemId]: product.descricao }));
   };
 
-  const selectCustomer = (customer: Customer) => {
-    setCustomerId(customer.id);
-    setCustomerSearch(customer.nome);
-    setShowCustomerList(false);
-  };
-
   const vTotal = items.reduce((s, i) => s + i.vProd, 0);
 
+  // ─── EMITIR NF ─────────────────────────────────────────────────────────────
+
   const handleSubmit = async () => {
-    if (!fiscalResult?.cfop) { setError('Consulte o motor fiscal antes de emitir.'); return; }
+    if (!fiscalResult?.cfop) { setError('Selecione a operação para o motor fiscal preencher os campos.'); return; }
     if (!company) { setError('Cadastre os dados da empresa primeiro.'); return; }
     if (items.some(i => !i.xProd || !i.ncm || !i.vUnCom)) { setError('Preencha todos os campos dos itens.'); return; }
-
     setError('');
     setLoading(true);
     try {
@@ -284,9 +424,7 @@ export default function Emit({ user, onBack }: Props) {
 
   const downloadXml = async (id: string, numero: number) => {
     const token = localStorage.getItem('token');
-    const res = await fetch(`/api/invoices/${id}/xml`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await fetch(`/api/invoices/${id}/xml`, { headers: { Authorization: `Bearer ${token}` } });
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -295,54 +433,30 @@ export default function Emit({ user, onBack }: Props) {
     a.click();
   };
 
+  // ─── TELA DE SUCESSO ───────────────────────────────────────────────────────
+
   if (success) {
     return (
       <div>
-        <div className="alert alert-success">
-          ✅ NF-e nº {success.numero} gerada com sucesso!
-        </div>
+        <div className="alert alert-success">✅ NF-e nº {success.numero} gerada com sucesso!</div>
         <div className="card">
           <div className="card-title">Resumo</div>
           <div className="result-grid">
-            <div className="result-item">
-              <div className="result-label">Número</div>
-              <div className="result-value">{success.numero}</div>
-            </div>
-            <div className="result-item">
-              <div className="result-label">CFOP</div>
-              <div className="result-value">{success.cfop}</div>
-            </div>
-            <div className="result-item">
-              <div className="result-label">Total</div>
-              <div className="result-value small">R$ {success.vTotal?.toFixed(2).replace('.', ',')}</div>
-            </div>
-            <div className="result-item">
-              <div className="result-label">Status</div>
-              <div className="result-value small text-warning">Gerada</div>
-            </div>
+            <div className="result-item"><div className="result-label">Número</div><div className="result-value">{success.numero}</div></div>
+            <div className="result-item"><div className="result-label">CFOP</div><div className="result-value">{success.cfop}</div></div>
+            <div className="result-item"><div className="result-label">Total</div><div className="result-value small">R$ {success.vTotal?.toFixed(2).replace('.', ',')}</div></div>
+            <div className="result-item"><div className="result-label">Status</div><div className="result-value small text-warning">Gerada</div></div>
           </div>
-          {fiscalResult?.informacoesComplementares && (
-            <div className="result-block">
-              <div className="result-block-label">Informações Complementares</div>
-              <div className="result-block-text">{fiscalResult.informacoesComplementares}</div>
-            </div>
-          )}
-          <div className="alert alert-warning mt-8">
-            ⚠️ Ambiente de homologação — NF sem valor fiscal
-          </div>
-          <button className="btn btn-primary mt-16" onClick={() => downloadXml(success.id, success.numero)}>
-            📥 Baixar XML
-          </button>
-          <button className="btn btn-outline mt-8" onClick={() => { setSuccess(null); setItems([newItem()]); setOperation(''); setPurpose(''); setFiscalResult(null); setCustomerId(''); setCustomerSearch(''); }}>
-            + Nova NF-e
-          </button>
-          <button className="btn btn-outline mt-8" onClick={onBack}>
-            ← Voltar
-          </button>
+          <div className="alert alert-warning mt-8">⚠️ Ambiente de homologação — NF sem valor fiscal</div>
+          <button className="btn btn-primary mt-16" onClick={() => downloadXml(success.id, success.numero)}>📥 Baixar XML</button>
+          <button className="btn btn-outline mt-8" onClick={() => { setSuccess(null); setItems([newItem()]); setOperation(''); setPurpose(''); setFiscalResult(null); setCustomerId(''); setCustomerSearch(''); setSelectedCustomer(null); }}>+ Nova NF-e</button>
+          <button className="btn btn-outline mt-8" onClick={onBack}>← Voltar</button>
         </div>
       </div>
     );
   }
+
+  // ─── FORMULÁRIO ────────────────────────────────────────────────────────────
 
   return (
     <div>
@@ -351,14 +465,7 @@ export default function Emit({ user, onBack }: Props) {
         <div className="card-title">Tipo da Nota</div>
         <div style={{ display: 'flex', gap: 8 }}>
           {[{ v: '1', l: '📤 Saída' }, { v: '0', l: '📥 Entrada' }].map(t => (
-            <button
-              key={t.v}
-              className={`btn ${tpNF === t.v ? 'btn-primary' : 'btn-outline'}`}
-              style={{ flex: 1 }}
-              onClick={() => setTpNF(t.v as '0' | '1')}
-            >
-              {t.l}
-            </button>
+            <button key={t.v} className={`btn ${tpNF === t.v ? 'btn-primary' : 'btn-outline'}`} style={{ flex: 1 }} onClick={() => setTpNF(t.v as '0' | '1')}>{t.l}</button>
           ))}
         </div>
       </div>
@@ -366,34 +473,183 @@ export default function Emit({ user, onBack }: Props) {
       {/* DESTINATÁRIO */}
       <div className="card">
         <div className="card-title">Destinatário</div>
-        <div className="form-group" style={{ position: 'relative' }}>
-          <label className="form-label">Buscar cliente</label>
-          <input
-            className="form-input"
-            placeholder="Nome ou CPF/CNPJ..."
-            value={customerSearch}
-            onChange={e => {
-              setCustomerSearch(e.target.value);
-              setShowCustomerList(true);
-              if (!e.target.value) setCustomerId('');
-              api.get(`/api/customers?q=${e.target.value}`).then(setCustomers).catch(() => {});
-            }}
-          />
-          {showCustomerList && customers.length > 0 && customerSearch && (
-            <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, zIndex: 20, maxHeight: 200, overflowY: 'auto' }}>
-              {customers.map(c => (
-                <div key={c.id} onClick={() => selectCustomer(c)} style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid var(--border)', fontSize: 14 }}>
-                  <div style={{ fontWeight: 600 }}>{c.nome}</div>
-                  <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>{c.cpfCnpj} — {c.uf}</div>
-                </div>
-              ))}
+
+        {selectedCustomer ? (
+          <div style={{ background: 'var(--bg)', borderRadius: 8, padding: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <div style={{ fontWeight: 700 }}>{selectedCustomer.nome}</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{selectedCustomer.cpfCnpj}</div>
+                {selectedCustomer.uf && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{selectedCustomer.xMun} — {selectedCustomer.uf}</div>}
+              </div>
+              <button onClick={() => { setSelectedCustomer(null); setCustomerId(''); setCustomerSearch(''); }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 14 }}>✕ Trocar</button>
             </div>
-          )}
-        </div>
-        {!customerId && (
-          <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-            Sem destinatário selecionado — NF será emitida sem destinatário.
           </div>
+        ) : (
+          <>
+            <div className="form-group" style={{ position: 'relative' }}>
+              <label className="form-label">Buscar cliente cadastrado</label>
+              <input
+                className="form-input"
+                placeholder="Nome ou CPF/CNPJ..."
+                value={customerSearch}
+                onChange={e => {
+                  setCustomerSearch(e.target.value);
+                  setShowCustomerList(true);
+                  api.get(`/api/customers?q=${e.target.value}`).then(setCustomers).catch(() => {});
+                }}
+                onFocus={() => setShowCustomerList(true)}
+              />
+              {showCustomerList && customers.length > 0 && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, zIndex: 20, maxHeight: 200, overflowY: 'auto' }}>
+                  {customers.map(c => (
+                    <div key={c.id} onClick={() => selectCustomer(c)} style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid var(--border)', fontSize: 14 }}>
+                      <div style={{ fontWeight: 600 }}>{c.nome}</div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: 12 }}>{c.cpfCnpj} — {c.uf}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <button className="btn btn-outline mt-8" onClick={() => { setShowNewCustomer(!showNewCustomer); setShowCustomerList(false); }}>
+              {showNewCustomer ? '✕ Cancelar' : '+ Novo cliente'}
+            </button>
+
+            {showNewCustomer && (
+              <div style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
+                <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Cadastrar novo cliente</div>
+
+                {/* Tipo de Pessoa */}
+                <div className="form-group">
+                  <label className="form-label">Tipo de Pessoa</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    {[{ v: 'PF', l: 'Pessoa Física' }, { v: 'PJ', l: 'Pessoa Jurídica' }].map(t => (
+                      <button key={t.v} className={`btn ${newCust.tipoPessoa === t.v ? 'btn-primary' : 'btn-outline'}`} style={{ flex: 1 }} onClick={() => setNewCust(prev => ({ ...prev, tipoPessoa: t.v as 'PF' | 'PJ', cpfCnpj: '' }))}>
+                        {t.l}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* CPF ou CNPJ */}
+                <div className="form-group">
+                  <label className="form-label">{newCust.tipoPessoa === 'PF' ? 'CPF' : 'CNPJ'}</label>
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <input
+                      className="form-input"
+                      placeholder={newCust.tipoPessoa === 'PF' ? '000.000.000-00' : '00.000.000/0000-00'}
+                      value={newCust.cpfCnpj}
+                      onChange={e => {
+                        const formatted = newCust.tipoPessoa === 'PF' ? formatCpf(e.target.value) : formatCnpj(e.target.value);
+                        setNewCust(prev => ({ ...prev, cpfCnpj: formatted }));
+                        setCnpjError('');
+                      }}
+                      onBlur={() => {
+                        if (newCust.tipoPessoa === 'PJ') buscarCnpj(newCust.cpfCnpj);
+                      }}
+                    />
+                    {newCust.tipoPessoa === 'PJ' && (
+                      <button className="btn btn-outline btn-sm" onClick={() => buscarCnpj(newCust.cpfCnpj)} disabled={loadingCnpj} style={{ whiteSpace: 'nowrap' }}>
+                        {loadingCnpj ? '...' : '🔍 Buscar'}
+                      </button>
+                    )}
+                  </div>
+                  {loadingCnpj && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Buscando dados na Receita Federal...</div>}
+                  {cnpjError && <div style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>{cnpjError}</div>}
+                </div>
+
+                {/* Nome */}
+                <div className="form-group">
+                  <label className="form-label">{newCust.tipoPessoa === 'PF' ? 'Nome completo' : 'Razão Social'}</label>
+                  <input className="form-input" value={newCust.nome} onChange={e => setNewCust(prev => ({ ...prev, nome: e.target.value }))} />
+                </div>
+
+                {/* IE para PJ */}
+                {newCust.tipoPessoa === 'PJ' && (
+                  <div className="form-group">
+                    <label className="form-label">Inscrição Estadual</label>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <input
+                        className="form-input"
+                        placeholder="IE ou ISENTO"
+                        value={newCust.ie}
+                        onChange={e => setNewCust(prev => ({ ...prev, ie: e.target.value, indIEDest: e.target.value === 'ISENTO' || !e.target.value ? '2' : '1' }))}
+                      />
+                      <button className="btn btn-outline btn-sm" onClick={() => setNewCust(prev => ({ ...prev, ie: 'ISENTO', indIEDest: '2' }))} style={{ whiteSpace: 'nowrap' }}>
+                        Isento
+                      </button>
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                      Deixe em branco para não contribuinte ou clique em "Isento"
+                    </div>
+                  </div>
+                )}
+
+                {/* CEP */}
+                <div className="form-group">
+                  <label className="form-label">CEP</label>
+                  <input
+                    className="form-input"
+                    placeholder="00000-000"
+                    value={newCust.cep}
+                    onChange={e => {
+                      const formatted = formatCep(e.target.value);
+                      setNewCust(prev => ({ ...prev, cep: formatted }));
+                    }}
+                    onBlur={() => buscarCep(newCust.cep)}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
+                  <div className="form-group">
+                    <label className="form-label">Logradouro</label>
+                    <input className="form-input" value={newCust.logradouro} onChange={e => setNewCust(prev => ({ ...prev, logradouro: e.target.value }))} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Nº</label>
+                    <input className="form-input" style={{ width: 70 }} value={newCust.numero} onChange={e => setNewCust(prev => ({ ...prev, numero: e.target.value }))} />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Bairro</label>
+                  <input className="form-input" value={newCust.bairro} onChange={e => setNewCust(prev => ({ ...prev, bairro: e.target.value }))} />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
+                  <div className="form-group">
+                    <label className="form-label">Município</label>
+                    <input className="form-input" value={newCust.xMun} onChange={e => setNewCust(prev => ({ ...prev, xMun: e.target.value }))} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">UF</label>
+                    <input className="form-input" style={{ width: 60 }} maxLength={2} value={newCust.uf} onChange={e => setNewCust(prev => ({ ...prev, uf: e.target.value.toUpperCase() }))} />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">E-mail (opcional)</label>
+                  <input className="form-input" type="email" value={newCust.email} onChange={e => setNewCust(prev => ({ ...prev, email: e.target.value }))} />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Telefone (opcional)</label>
+                  <input className="form-input" value={newCust.fone} onChange={e => setNewCust(prev => ({ ...prev, fone: e.target.value }))} />
+                </div>
+
+                <button className="btn btn-primary" onClick={handleSaveCustomer} disabled={savingCustomer}>
+                  {savingCustomer ? 'Salvando...' : '✅ Salvar cliente'}
+                </button>
+              </div>
+            )}
+
+            {!selectedCustomer && !showNewCustomer && (
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 8 }}>
+                Sem destinatário — NF será emitida sem destinatário.
+              </div>
+            )}
+          </>
         )}
       </div>
 
@@ -419,17 +675,15 @@ export default function Emit({ user, onBack }: Props) {
 
         {loadingFiscal && <div style={{ fontSize: 13, color: 'var(--text-muted)' }}>⏳ Consultando motor fiscal...</div>}
 
-        {fiscalResult && fiscalResult.cfop && (
+        {fiscalResult?.cfop && (
           <div style={{ background: 'var(--bg)', borderRadius: 8, padding: 12, marginTop: 8 }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>MOTOR FISCAL</div>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-              <div><span style={{ fontSize: 11, color: 'var(--text-muted)' }}>CFOP </span><strong style={{ color: 'var(--primary-light)' }}>{fiscalResult.cfop}</strong></div>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 6 }}>✅ MOTOR FISCAL</div>
+            <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              <div><span style={{ fontSize: 11, color: 'var(--text-muted)' }}>CFOP </span><strong style={{ color: 'var(--primary-light)', fontSize: 18 }}>{fiscalResult.cfop}</strong></div>
               <div><span style={{ fontSize: 11, color: 'var(--text-muted)' }}>CSOSN </span><strong style={{ color: 'var(--primary-light)' }}>{fiscalResult.cstCsosn}</strong></div>
-              <div><span style={{ fontSize: 11, color: 'var(--text-muted)' }}>Nat. Op. </span><strong>{fiscalResult.naturezaOperacao}</strong></div>
+              <div style={{ fontSize: 13 }}>{fiscalResult.naturezaOperacao}</div>
             </div>
-            {fiscalResult.mensagemAlerta && (
-              <div className="alert alert-warning mt-8" style={{ fontSize: 12 }}>⚠️ {fiscalResult.mensagemAlerta}</div>
-            )}
+            {fiscalResult.mensagemAlerta && <div className="alert alert-warning mt-8" style={{ fontSize: 12 }}>⚠️ {fiscalResult.mensagemAlerta}</div>}
           </div>
         )}
       </div>
@@ -450,7 +704,7 @@ export default function Emit({ user, onBack }: Props) {
               )}
             </div>
 
-            {/* Busca de produto */}
+            {/* Produto */}
             <div className="form-group" style={{ position: 'relative' }}>
               <label className="form-label">Produto / Serviço</label>
               <input
@@ -484,19 +738,14 @@ export default function Emit({ user, onBack }: Props) {
                   <span style={{ color: 'var(--success)', fontSize: 11, marginLeft: 6 }}>✓ sugerido automaticamente</span>
                 )}
               </label>
-              <input
-                className="form-input"
-                placeholder="00000000"
-                value={item.ncm}
-                onChange={e => handleNcmChange(item.id, e.target.value)}
-              />
+              <input className="form-input" placeholder="00000000" value={item.ncm} onChange={e => handleNcmChange(item.id, e.target.value)} />
               {ncmAlerts[item.id] && (
                 <div style={{ marginTop: 6, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 6, padding: '8px 10px', fontSize: 12, color: '#fbbf24' }}>
                   ⚠️ {ncmAlerts[item.id]}
                   <div style={{ marginTop: 6, display: 'flex', gap: 8 }}>
                     <button onClick={() => {
-                      const sugerida = ncmAlerts[item.id].match(/é (\d+)/)?.[1];
-                      if (sugerida) updateItem(item.id, { ncm: sugerida });
+                      const match = ncmAlerts[item.id].match(/:\s*(\d+)/);
+                      if (match) updateItem(item.id, { ncm: match[1] });
                       setNcmAlerts(prev => { const n = { ...prev }; delete n[item.id]; return n; });
                     }} style={{ background: 'var(--primary)', color: 'white', border: 'none', borderRadius: 4, padding: '3px 8px', fontSize: 11, cursor: 'pointer' }}>
                       Usar sugerida
@@ -509,7 +758,7 @@ export default function Emit({ user, onBack }: Props) {
               )}
             </div>
 
-            {/* Quantidade e Valor */}
+            {/* Qtd e Valor */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
               <div className="form-group">
                 <label className="form-label">Un.</label>
@@ -541,7 +790,7 @@ export default function Emit({ user, onBack }: Props) {
           </div>
         ))}
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderTop: '1px solid var(--border)', marginTop: 8 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderTop: '1px solid var(--border)' }}>
           <span style={{ fontWeight: 600 }}>Total da NF</span>
           <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary-light)' }}>R$ {vTotal.toFixed(2).replace('.', ',')}</span>
         </div>
@@ -570,11 +819,7 @@ export default function Emit({ user, onBack }: Props) {
         ⚠️ NF será gerada em <strong>homologação</strong> (sem valor fiscal)
       </div>
 
-      <button
-        className="btn btn-primary"
-        onClick={handleSubmit}
-        disabled={loading || !fiscalResult?.cfop || items.some(i => !i.xProd || !i.ncm)}
-      >
+      <button className="btn btn-primary" onClick={handleSubmit} disabled={loading || !fiscalResult?.cfop || items.some(i => !i.xProd || !i.ncm)}>
         {loading ? 'Gerando...' : '📄 Gerar NF-e'}
       </button>
 
