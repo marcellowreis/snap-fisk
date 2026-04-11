@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "tsc -p tsconfig.json",
-    "start": "npx prisma db push --accept-data-loss && npx tsx src/server.ts",
+    "build": "cd frontend && npm install && npm run build",
+    "start": "npx prisma db push && cd frontend && npm install && npm run build && cd .. && npx tsx src/server.ts",
     "prisma:migrate": "prisma migrate dev",
     "prisma:seed": "tsx prisma/seed.ts"
   },
