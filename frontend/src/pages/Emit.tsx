@@ -2,8 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { api } from '../api';
 import type { User } from '../App';
 
-// ─── TIPOS ───────────────────────────────────────────────────────────────────
-
 type Customer = {
   id: string;
   tipoPessoa: string;
@@ -14,6 +12,7 @@ type Customer = {
   xMun?: string;
   logradouro?: string;
   numero?: string;
+  complemento?: string;
   bairro?: string;
   cep?: string;
   cMun?: string;
@@ -63,13 +62,12 @@ type NewCustomer = {
   cep: string;
   logradouro: string;
   numero: string;
+  complemento: string;
   bairro: string;
   xMun: string;
   cMun: string;
   uf: string;
 };
-
-// ─── CONSTANTES ──────────────────────────────────────────────────────────────
 
 const OPERATIONS = [
   { value: 'venda', label: 'Venda' },
@@ -133,6 +131,7 @@ const emptyCustomer = (): NewCustomer => ({
   cep: '',
   logradouro: '',
   numero: '',
+  complemento: '',
   bairro: '',
   xMun: '',
   cMun: '',
@@ -173,7 +172,6 @@ type Props = { user: User; onBack: () => void };
 export default function Emit({ user, onBack }: Props) {
   const company = user.company;
 
-  // Destinatário
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerId, setCustomerId] = useState('');
   const [customerSearch, setCustomerSearch] = useState('');
@@ -185,25 +183,21 @@ export default function Emit({ user, onBack }: Props) {
   const [savingCustomer, setSavingCustomer] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
-  // Operação
   const [tpNF, setTpNF] = useState<'0' | '1'>('1');
   const [operation, setOperation] = useState('');
   const [purpose, setPurpose] = useState('');
   const [fiscalResult, setFiscalResult] = useState<FiscalResult | null>(null);
   const [loadingFiscal, setLoadingFiscal] = useState(false);
 
-  // Itens
   const [items, setItems] = useState<Item[]>([newItem()]);
   const [products, setProducts] = useState<Product[]>([]);
   const [productSearch, setProductSearch] = useState<Record<string, string>>({});
   const [showProductList, setShowProductList] = useState<Record<string, boolean>>({});
   const [ncmAlerts, setNcmAlerts] = useState<Record<string, string>>({});
 
-  // Pagamento
   const [tPag, setTPag] = useState('90');
   const [vPag, setVPag] = useState(0);
 
-  // Estado geral
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<any>(null);
@@ -214,7 +208,6 @@ export default function Emit({ user, onBack }: Props) {
     api.get('/api/products').then(setProducts).catch(() => {});
   }, []);
 
-  // Motor fiscal automático
   useEffect(() => {
     if (!operation || !purpose || !company) return;
     setLoadingFiscal(true);
@@ -244,8 +237,6 @@ export default function Emit({ user, onBack }: Props) {
       const res = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${clean}`);
       if (!res.ok) throw new Error('CNPJ não encontrado');
       const data = await res.json();
-
-      // Buscar IE via SINTEGRA (simplificado — campo manual para outros estados)
       setNewCust(prev => ({
         ...prev,
         tipoPessoa: 'PJ',
@@ -253,6 +244,7 @@ export default function Emit({ user, onBack }: Props) {
         nome: data.razao_social || data.nome_fantasia || '',
         logradouro: data.logradouro || '',
         numero: data.numero || '',
+        complemento: data.complemento || '',
         bairro: data.bairro || '',
         xMun: data.municipio || '',
         cMun: data.codigo_municipio_ibge?.toString() || '',
@@ -260,11 +252,11 @@ export default function Emit({ user, onBack }: Props) {
         cep: (data.cep || '').replace(/\D/g, '').replace(/(\d{5})(\d)/, '$1-$2'),
         email: data.email || '',
         fone: data.ddd_telefone_1 ? data.ddd_telefone_1.replace(/\D/g, '') : '',
-        indIEDest: data.situacao_cadastral === 'ATIVA' ? '1' : '9',
+        indIEDest: '1',
         ie: '',
       }));
     } catch {
-      setCnpjError('CNPJ não encontrado na Receita Federal. Preencha os dados manualmente.');
+      setCnpjError('CNPJ não encontrado na Receita Federal. Preencha manualmente.');
     } finally {
       setLoadingCnpj(false);
     }
@@ -294,17 +286,24 @@ export default function Emit({ user, onBack }: Props) {
   // ─── SALVAR CLIENTE ────────────────────────────────────────────────────────
 
   const handleSaveCustomer = async () => {
-    if (!newCust.cpfCnpj || !newCust.nome) {
-      setCnpjError('CPF/CNPJ e Nome são obrigatórios.');
+    const docClean = newCust.cpfCnpj.replace(/\D/g, '');
+    if (!docClean || (docClean.length !== 11 && docClean.length !== 14)) {
+      setCnpjError('CPF (11 dígitos) ou CNPJ (14 dígitos) inválido.');
+      return;
+    }
+    if (!newCust.nome) {
+      setCnpjError('Nome é obrigatório.');
       return;
     }
     setSavingCustomer(true);
+    setCnpjError('');
     try {
       const saved = await api.post('/api/customers', {
         ...newCust,
-        cpfCnpj: newCust.cpfCnpj.replace(/\D/g, ''),
+        cpfCnpj: docClean,
         ie: newCust.ie || undefined,
-        indIEDest: newCust.indIEDest,
+        complemento: newCust.complemento || undefined,
+        email: newCust.email || undefined,
       });
       setCustomers(prev => [saved, ...prev]);
       setSelectedCustomer(saved);
@@ -312,7 +311,6 @@ export default function Emit({ user, onBack }: Props) {
       setCustomerSearch(saved.nome);
       setShowNewCustomer(false);
       setNewCust(emptyCustomer());
-      setCnpjError('');
     } catch (e: any) {
       setCnpjError(e.message);
     } finally {
@@ -375,6 +373,27 @@ export default function Emit({ user, onBack }: Props) {
   };
 
   const vTotal = items.reduce((s, i) => s + i.vProd, 0);
+
+  // ─── COMPARTILHAR ──────────────────────────────────────────────────────────
+
+  const handleShare = async (invoice: any) => {
+    const text = `📄 *NF-e Snap Fisk*
+Nº: ${invoice.numero} | Série: ${invoice.serie}
+CFOP: ${invoice.cfop} | Total: R$ ${invoice.vTotal?.toFixed(2).replace('.', ',')}
+${selectedCustomer ? `Destinatário: ${selectedCustomer.nome}` : ''}
+${fiscalResult?.naturezaOperacao ? `Operação: ${fiscalResult.naturezaOperacao}` : ''}
+Status: Gerada (homologação)
+_Emitida pelo Snap Fisk — snapfisk.com.br_`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: `NF-e nº ${invoice.numero}`, text });
+      } catch {}
+    } else {
+      await navigator.clipboard.writeText(text);
+      alert('Resumo copiado! Cole no WhatsApp ou e-mail.');
+    }
+  };
 
   // ─── EMITIR NF ─────────────────────────────────────────────────────────────
 
@@ -440,16 +459,56 @@ export default function Emit({ user, onBack }: Props) {
       <div>
         <div className="alert alert-success">✅ NF-e nº {success.numero} gerada com sucesso!</div>
         <div className="card">
-          <div className="card-title">Resumo</div>
+          <div className="card-title">Resumo da NF-e</div>
           <div className="result-grid">
             <div className="result-item"><div className="result-label">Número</div><div className="result-value">{success.numero}</div></div>
             <div className="result-item"><div className="result-label">CFOP</div><div className="result-value">{success.cfop}</div></div>
             <div className="result-item"><div className="result-label">Total</div><div className="result-value small">R$ {success.vTotal?.toFixed(2).replace('.', ',')}</div></div>
             <div className="result-item"><div className="result-label">Status</div><div className="result-value small text-warning">Gerada</div></div>
           </div>
+
+          {fiscalResult?.naturezaOperacao && (
+            <div className="result-block">
+              <div className="result-block-label">Natureza da Operação</div>
+              <div className="result-block-text fw-700">{fiscalResult.naturezaOperacao}</div>
+            </div>
+          )}
+
+          {selectedCustomer && (
+            <div className="result-block">
+              <div className="result-block-label">Destinatário</div>
+              <div className="result-block-text">{selectedCustomer.nome} — {selectedCustomer.cpfCnpj}</div>
+            </div>
+          )}
+
           <div className="alert alert-warning mt-8">⚠️ Ambiente de homologação — NF sem valor fiscal</div>
-          <button className="btn btn-primary mt-16" onClick={() => downloadXml(success.id, success.numero)}>📥 Baixar XML</button>
-          <button className="btn btn-outline mt-8" onClick={() => { setSuccess(null); setItems([newItem()]); setOperation(''); setPurpose(''); setFiscalResult(null); setCustomerId(''); setCustomerSearch(''); setSelectedCustomer(null); }}>+ Nova NF-e</button>
+
+          {/* Botões de ação */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 16 }}>
+            <button className="btn btn-primary" onClick={() => downloadXml(success.id, success.numero)}>
+              📥 Baixar XML
+            </button>
+            <button
+              className="btn btn-outline"
+              onClick={() => handleShare(success)}
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}
+            >
+              📤 Compartilhar
+            </button>
+          </div>
+
+          <button className="btn btn-outline mt-8" onClick={() => {
+            setSuccess(null);
+            setItems([newItem()]);
+            setOperation('');
+            setPurpose('');
+            setFiscalResult(null);
+            setCustomerId('');
+            setCustomerSearch('');
+            setSelectedCustomer(null);
+          }}>
+            + Nova NF-e
+          </button>
           <button className="btn btn-outline mt-8" onClick={onBack}>← Voltar</button>
         </div>
       </div>
@@ -481,6 +540,7 @@ export default function Emit({ user, onBack }: Props) {
                 <div style={{ fontWeight: 700 }}>{selectedCustomer.nome}</div>
                 <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{selectedCustomer.cpfCnpj}</div>
                 {selectedCustomer.uf && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>{selectedCustomer.xMun} — {selectedCustomer.uf}</div>}
+                {selectedCustomer.email && <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>✉️ {selectedCustomer.email}</div>}
               </div>
               <button onClick={() => { setSelectedCustomer(null); setCustomerId(''); setCustomerSearch(''); }} style={{ background: 'none', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: 14 }}>✕ Trocar</button>
             </div>
@@ -520,7 +580,6 @@ export default function Emit({ user, onBack }: Props) {
               <div style={{ marginTop: 16, borderTop: '1px solid var(--border)', paddingTop: 16 }}>
                 <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Cadastrar novo cliente</div>
 
-                {/* Tipo de Pessoa */}
                 <div className="form-group">
                   <label className="form-label">Tipo de Pessoa</label>
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -532,7 +591,6 @@ export default function Emit({ user, onBack }: Props) {
                   </div>
                 </div>
 
-                {/* CPF ou CNPJ */}
                 <div className="form-group">
                   <label className="form-label">{newCust.tipoPessoa === 'PF' ? 'CPF' : 'CNPJ'}</label>
                   <div style={{ display: 'flex', gap: 8 }}>
@@ -545,9 +603,7 @@ export default function Emit({ user, onBack }: Props) {
                         setNewCust(prev => ({ ...prev, cpfCnpj: formatted }));
                         setCnpjError('');
                       }}
-                      onBlur={() => {
-                        if (newCust.tipoPessoa === 'PJ') buscarCnpj(newCust.cpfCnpj);
-                      }}
+                      onBlur={() => { if (newCust.tipoPessoa === 'PJ') buscarCnpj(newCust.cpfCnpj); }}
                     />
                     {newCust.tipoPessoa === 'PJ' && (
                       <button className="btn btn-outline btn-sm" onClick={() => buscarCnpj(newCust.cpfCnpj)} disabled={loadingCnpj} style={{ whiteSpace: 'nowrap' }}>
@@ -555,61 +611,44 @@ export default function Emit({ user, onBack }: Props) {
                       </button>
                     )}
                   </div>
-                  {loadingCnpj && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Buscando dados na Receita Federal...</div>}
+                  {loadingCnpj && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>Buscando na Receita Federal...</div>}
                   {cnpjError && <div style={{ fontSize: 12, color: 'var(--danger)', marginTop: 4 }}>{cnpjError}</div>}
                 </div>
 
-                {/* Nome */}
                 <div className="form-group">
                   <label className="form-label">{newCust.tipoPessoa === 'PF' ? 'Nome completo' : 'Razão Social'}</label>
                   <input className="form-input" value={newCust.nome} onChange={e => setNewCust(prev => ({ ...prev, nome: e.target.value }))} />
                 </div>
 
-                {/* IE para PJ */}
                 {newCust.tipoPessoa === 'PJ' && (
                   <div className="form-group">
                     <label className="form-label">Inscrição Estadual</label>
                     <div style={{ display: 'flex', gap: 8 }}>
-                      <input
-                        className="form-input"
-                        placeholder="IE ou ISENTO"
-                        value={newCust.ie}
-                        onChange={e => setNewCust(prev => ({ ...prev, ie: e.target.value, indIEDest: e.target.value === 'ISENTO' || !e.target.value ? '2' : '1' }))}
-                      />
-                      <button className="btn btn-outline btn-sm" onClick={() => setNewCust(prev => ({ ...prev, ie: 'ISENTO', indIEDest: '2' }))} style={{ whiteSpace: 'nowrap' }}>
-                        Isento
-                      </button>
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
-                      Deixe em branco para não contribuinte ou clique em "Isento"
+                      <input className="form-input" placeholder="IE ou ISENTO" value={newCust.ie} onChange={e => setNewCust(prev => ({ ...prev, ie: e.target.value, indIEDest: !e.target.value || e.target.value === 'ISENTO' ? '2' : '1' }))} />
+                      <button className="btn btn-outline btn-sm" onClick={() => setNewCust(prev => ({ ...prev, ie: 'ISENTO', indIEDest: '2' }))} style={{ whiteSpace: 'nowrap' }}>Isento</button>
                     </div>
                   </div>
                 )}
 
-                {/* CEP */}
                 <div className="form-group">
                   <label className="form-label">CEP</label>
-                  <input
-                    className="form-input"
-                    placeholder="00000-000"
-                    value={newCust.cep}
-                    onChange={e => {
-                      const formatted = formatCep(e.target.value);
-                      setNewCust(prev => ({ ...prev, cep: formatted }));
-                    }}
-                    onBlur={() => buscarCep(newCust.cep)}
-                  />
+                  <input className="form-input" placeholder="00000-000" value={newCust.cep} onChange={e => { const f = formatCep(e.target.value); setNewCust(prev => ({ ...prev, cep: f })); }} onBlur={() => buscarCep(newCust.cep)} />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: 8 }}>
                   <div className="form-group">
                     <label className="form-label">Logradouro</label>
                     <input className="form-input" value={newCust.logradouro} onChange={e => setNewCust(prev => ({ ...prev, logradouro: e.target.value }))} />
                   </div>
                   <div className="form-group">
                     <label className="form-label">Nº</label>
-                    <input className="form-input" style={{ width: 70 }} value={newCust.numero} onChange={e => setNewCust(prev => ({ ...prev, numero: e.target.value }))} />
+                    <input className="form-input" value={newCust.numero} onChange={e => setNewCust(prev => ({ ...prev, numero: e.target.value }))} />
                   </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label">Complemento (opcional)</label>
+                  <input className="form-input" placeholder="Apto, Sala, Bloco..." value={newCust.complemento} onChange={e => setNewCust(prev => ({ ...prev, complemento: e.target.value }))} />
                 </div>
 
                 <div className="form-group">
@@ -617,20 +656,20 @@ export default function Emit({ user, onBack }: Props) {
                   <input className="form-input" value={newCust.bairro} onChange={e => setNewCust(prev => ({ ...prev, bairro: e.target.value }))} />
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8 }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 70px', gap: 8 }}>
                   <div className="form-group">
                     <label className="form-label">Município</label>
                     <input className="form-input" value={newCust.xMun} onChange={e => setNewCust(prev => ({ ...prev, xMun: e.target.value }))} />
                   </div>
                   <div className="form-group">
                     <label className="form-label">UF</label>
-                    <input className="form-input" style={{ width: 60 }} maxLength={2} value={newCust.uf} onChange={e => setNewCust(prev => ({ ...prev, uf: e.target.value.toUpperCase() }))} />
+                    <input className="form-input" maxLength={2} value={newCust.uf} onChange={e => setNewCust(prev => ({ ...prev, uf: e.target.value.toUpperCase() }))} />
                   </div>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label">E-mail (opcional)</label>
-                  <input className="form-input" type="email" value={newCust.email} onChange={e => setNewCust(prev => ({ ...prev, email: e.target.value }))} />
+                  <label className="form-label">E-mail <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>(Envio do XML)</span></label>
+                  <input className="form-input" type="email" placeholder="cliente@email.com" value={newCust.email} onChange={e => setNewCust(prev => ({ ...prev, email: e.target.value }))} />
                 </div>
 
                 <div className="form-group">
@@ -704,7 +743,6 @@ export default function Emit({ user, onBack }: Props) {
               )}
             </div>
 
-            {/* Produto */}
             <div className="form-group" style={{ position: 'relative' }}>
               <label className="form-label">Produto / Serviço</label>
               <input
@@ -730,7 +768,6 @@ export default function Emit({ user, onBack }: Props) {
               )}
             </div>
 
-            {/* NCM */}
             <div className="form-group">
               <label className="form-label">
                 NCM
@@ -758,7 +795,6 @@ export default function Emit({ user, onBack }: Props) {
               )}
             </div>
 
-            {/* Qtd e Valor */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
               <div className="form-group">
                 <label className="form-label">Un.</label>
