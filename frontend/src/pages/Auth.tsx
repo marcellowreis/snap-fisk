@@ -11,16 +11,16 @@ export default function Auth({ onLogin }: Props) {
   const [cnpj, setCnpj] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const formatCnpj = (v: string) => {
-    return v.replace(/\D/g, '').slice(0, 14)
+  const formatCnpj = (v: string) =>
+    v.replace(/\D/g, '').slice(0, 14)
       .replace(/(\d{2})(\d)/, '$1.$2')
       .replace(/(\d{3})(\d)/, '$1.$2')
       .replace(/(\d{3})(\d)/, '$1/$2')
       .replace(/(\d{4})(\d)/, '$1-$2');
-  };
 
   const handleSubmit = async () => {
     setError('');
@@ -30,7 +30,6 @@ export default function Auth({ onLogin }: Props) {
       const body = mode === 'login'
         ? { cnpj, password }
         : { cnpj, email, password };
-
       const data = await api.post(path, body);
       onLogin(data.token, data.user);
     } catch (e: any) {
@@ -77,14 +76,37 @@ export default function Auth({ onLogin }: Props) {
 
         <div className="form-group">
           <label className="form-label">Senha</label>
-          <input
-            className="form-input"
-            type="password"
-            placeholder="••••••"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-          />
+          <div style={{ position: 'relative' }}>
+            <input
+              className="form-input"
+              type={showPassword ? 'text' : 'password'}
+              placeholder="••••••"
+              value={password}
+              style={{ paddingRight: 44 }}
+              onChange={e => setPassword(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(prev => !prev)}
+              style={{
+                position: 'absolute',
+                right: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: 18,
+                color: 'var(--text-muted)',
+                padding: 0,
+                lineHeight: 1,
+              }}
+              title={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+            >
+              {showPassword ? '🙈' : '👁️'}
+            </button>
+          </div>
         </div>
 
         <button
