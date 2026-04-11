@@ -132,6 +132,17 @@ export default function Auth({ onLogin }: Props) {
             </>
           )}
         </div>
+
+        {mode === 'login' && (
+          <div style={{ textAlign: 'center', marginTop: 12 }}>
+            <button
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: 13, cursor: 'pointer', textDecoration: 'underline' }}
+              onClick={() => alert('Para redefinir sua senha, entre em contato pelo e-mail: suporte@snapfisk.com.br')}
+            >
+              Esqueci minha senha
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
