@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { api } from '../api';
-import type { User } from '../App';
+import type { User, FiscalContext } from '../App';
 
 const UFS = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'];
 
@@ -44,29 +44,25 @@ const PURPOSES: Record<string, { value: string; label: string }[]> = {
   servico: [{ value: 'normal', label: 'Prestação de serviço' }],
 };
 
-const TAX_REGIMES = [
-  { value: 'simples_nacional', label: 'Simples Nacional / MEI' },
-  { value: 'lucro_presumido', label: 'Lucro Presumido' },
-  { value: 'lucro_real', label: 'Lucro Real' },
-];
-
 type Props = {
   user: User;
   onNeedPlan: () => void;
   onEmit: () => void;
+  onEmitWithContext: (ctx: FiscalContext) => void;
 };
 
-export default function Home({ user, onNeedPlan, onEmit }: Props) {
+export default function Home({ user, onNeedPlan, onEmit, onEmitWithContext }: Props) {
   const company = user.company;
   const [originUf, setOriginUf] = useState(company?.uf ?? 'SP');
   const [destinationUf, setDestinationUf] = useState('SP');
   const [operation, setOperation] = useState('');
   const [purpose, setPurpose] = useState('');
-  const [taxRegime, setTaxRegime] = useState(company?.taxRegime ?? 'simples_nacional');
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState('');
+
+  const taxRegime = company?.taxRegime ?? 'simples_nacional';
 
   const handleOperation = (op: string) => {
     setOperation(op);
@@ -80,7 +76,13 @@ export default function Home({ user, onNeedPlan, onEmit }: Props) {
     setLoading(true);
     setResult(null);
     try {
-      const data = await api.post('/api/fiscal-engine/query', { originUf, destinationUf, operation, purpose, taxRegime });
+      const data = await api.post('/api/fiscal-engine/query', {
+        originUf,
+        destinationUf,
+        operation,
+        purpose,
+        taxRegime,
+      });
       setResult(data);
     } catch (e: any) {
       setError(e.message);
@@ -97,8 +99,23 @@ export default function Home({ user, onNeedPlan, onEmit }: Props) {
 
   const copyAll = () => {
     if (!result) return;
-    const text = `SNAP FISK — ORIENTAÇÃO FISCAL\nCFOP: ${result.cfop ?? '-'}\nCST/CSOSN: ${result.cstCsosn ?? '-'}\nICMS: ${result.icmsApplicable ? 'Sim' : 'Não'}\nIPI: ${result.ipiApplicable ? 'Sim' : 'Não'}\nNatureza: ${result.naturezaOperacao ?? '-'}\n\nInformações Complementares:\n${result.informacoesComplementares ?? '-'}\n\nBase Legal:\n${result.baseLegal ?? '-'}`.trim();
+    const text = `SNAP FISK — ORIENTAÇÃO FISCAL\nCFOP: ${result.cfop ?? '-'}\nCST/CSOSN: ${result.cstCsosn ?? '-'}\nICMS: ${result.icmsApplicable ? 'Destaca' : 'Não destaca'}\nIPI: ${result.ipiApplicable ? 'Destaca' : 'Não destaca'}\nNatureza: ${result.naturezaOperacao ?? '-'}\n\nInformações Complementares:\n${result.informacoesComplementares ?? '-'}\n\nBase Legal:\n${result.baseLegal ?? '-'}`.trim();
     copy(text, 'all');
+  };
+
+  const handleEmitWithContext = () => {
+    if (!result?.cfop) return;
+    onEmitWithContext({
+      operation,
+      purpose,
+      originUf,
+      destinationUf,
+      cfop: result.cfop,
+      cstCsosn: result.cstCsosn || '102',
+      naturezaOperacao: result.naturezaOperacao || '',
+      informacoesComplementares: result.informacoesComplementares || '',
+      mensagemAlerta: result.mensagemAlerta || '',
+    });
   };
 
   return (
@@ -150,12 +167,12 @@ export default function Home({ user, onNeedPlan, onEmit }: Props) {
           </div>
         )}
 
-        <div className="form-group">
-          <label className="form-label">Regime Tributário</label>
-          <select className="form-select" value={taxRegime} onChange={e => setTaxRegime(e.target.value)}>
-            {TAX_REGIMES.map(r => <option key={r.value} value={r.value}>{r.label}</option>)}
-          </select>
-        </div>
+        {/* Regime tributário oculto — usa o da empresa */}
+        {company?.taxRegime && (
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
+            🏢 Regime: <strong>{company.taxRegime === 'simples_nacional' || company.taxRegime === 'mei' ? 'Simples Nacional / MEI' : company.taxRegime}</strong>
+          </div>
+        )}
 
         {error && <div className="alert alert-danger">{error}</div>}
 
@@ -229,7 +246,7 @@ export default function Home({ user, onNeedPlan, onEmit }: Props) {
                 <div className="alert alert-warning">⚠️ {result.mensagemAlerta}</div>
               )}
 
-              <button className="btn btn-primary mt-16" onClick={onEmit}>
+              <button className="btn btn-primary mt-16" onClick={handleEmitWithContext}>
                 📄 Emitir NF-e com esses dados →
               </button>
             </>
