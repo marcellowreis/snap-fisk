@@ -92,7 +92,7 @@ const productSchema = z.object({
 
 const customerSchema = z.object({
   tipoPessoa: z.enum(['PF', 'PJ']).default('PF'),
-  cpfCnpj: z.string().min(11).max(18),
+  cpfCnpj: z.string().min(11).max(18).transform(v => v.replace(/\D/g, '')),
   nome: z.string().min(1),
   ie: z.string().optional(),
   indIEDest: z.string().default('9'),
