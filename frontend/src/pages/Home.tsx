@@ -47,11 +47,10 @@ const PURPOSES: Record<string, { value: string; label: string }[]> = {
 type Props = {
   user: User;
   onNeedPlan: () => void;
-  onEmit: () => void;
   onEmitWithContext: (ctx: FiscalContext) => void;
 };
 
-export default function Home({ user, onNeedPlan, onEmit, onEmitWithContext }: Props) {
+export default function Home({ user, onNeedPlan, onEmitWithContext }: Props) {
   const company = user.company;
   const [originUf, setOriginUf] = useState(company?.uf ?? 'SP');
   const [destinationUf, setDestinationUf] = useState('SP');
@@ -120,18 +119,6 @@ export default function Home({ user, onNeedPlan, onEmit, onEmitWithContext }: Pr
 
   return (
     <div>
-      {/* Atalho para emitir NF */}
-      <div className="card" style={{ background: 'linear-gradient(135deg, var(--primary-dark), var(--primary))', border: 'none', cursor: 'pointer' }} onClick={onEmit}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <span style={{ fontSize: 32 }}>📄</span>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: 16 }}>Emitir NF-e</div>
-            <div style={{ fontSize: 13, opacity: 0.85 }}>Com preenchimento automático dos campos fiscais</div>
-          </div>
-          <span style={{ marginLeft: 'auto', fontSize: 20 }}>→</span>
-        </div>
-      </div>
-
       <div className="card">
         <div className="card-title">Consultar Motor Fiscal</div>
 
