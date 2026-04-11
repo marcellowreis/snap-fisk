@@ -25,32 +25,23 @@ const PURPOSES: Record<string, { value: string; label: string }[]> = {
     { value: 'conserto', label: 'Para conserto' },
     { value: 'conserto_interestadual', label: 'Para conserto — outro estado' },
     { value: 'demonstracao', label: 'Para demonstração' },
-    { value: 'demonstracao_interestadual', label: 'Demonstração — outro estado' },
     { value: 'industrializacao', label: 'Para industrialização' },
-    { value: 'industrializacao_interestadual', label: 'Industrialização — outro estado' },
     { value: 'deposito', label: 'Para depósito' },
     { value: 'brinde', label: 'Brinde' },
     { value: 'bonificacao', label: 'Bonificação' },
-    { value: 'conta_ordem', label: 'Por conta e ordem' },
   ],
   retorno: [
     { value: 'conserto', label: 'De conserto' },
-    { value: 'conserto_interestadual', label: 'De conserto — outro estado' },
     { value: 'demonstracao', label: 'De demonstração' },
     { value: 'industrializacao', label: 'De industrialização' },
     { value: 'deposito', label: 'De depósito' },
   ],
   devolucao: [
     { value: 'compra', label: 'Devolução de compra' },
-    { value: 'compra_interestadual', label: 'Devolução de compra — outro estado' },
     { value: 'venda', label: 'Devolução de venda' },
   ],
-  transferencia: [
-    { value: 'normal', label: 'Entre estabelecimentos' },
-  ],
-  servico: [
-    { value: 'normal', label: 'Prestação de serviço' },
-  ],
+  transferencia: [{ value: 'normal', label: 'Entre estabelecimentos' }],
+  servico: [{ value: 'normal', label: 'Prestação de serviço' }],
 };
 
 const TAX_REGIMES = [
@@ -62,9 +53,10 @@ const TAX_REGIMES = [
 type Props = {
   user: User;
   onNeedPlan: () => void;
+  onEmit: () => void;
 };
 
-export default function Home({ user, onNeedPlan }: Props) {
+export default function Home({ user, onNeedPlan, onEmit }: Props) {
   const company = user.company;
   const [originUf, setOriginUf] = useState(company?.uf ?? 'SP');
   const [destinationUf, setDestinationUf] = useState('SP');
@@ -83,28 +75,15 @@ export default function Home({ user, onNeedPlan }: Props) {
   };
 
   const handleConsult = async () => {
-    if (!operation || !purpose) {
-      setError('Preencha todos os campos.');
-      return;
-    }
+    if (!operation || !purpose) { setError('Preencha todos os campos.'); return; }
     setError('');
     setLoading(true);
     setResult(null);
     try {
-      const data = await api.post('/api/fiscal-engine/query', {
-        originUf,
-        destinationUf,
-        operation,
-        purpose,
-        taxRegime,
-      });
+      const data = await api.post('/api/fiscal-engine/query', { originUf, destinationUf, operation, purpose, taxRegime });
       setResult(data);
     } catch (e: any) {
-      if (e.message?.includes('plano')) {
-        onNeedPlan();
-      } else {
-        setError(e.message);
-      }
+      setError(e.message);
     } finally {
       setLoading(false);
     }
@@ -118,34 +97,26 @@ export default function Home({ user, onNeedPlan }: Props) {
 
   const copyAll = () => {
     if (!result) return;
-    const text = `
-SNAP FISK — ORIENTAÇÃO FISCAL
-==============================
-Natureza: ${result.naturezaOperacao ?? '-'}
-CFOP: ${result.cfop ?? '-'}
-CST/CSOSN: ${result.cstCsosn ?? '-'}
-Destaca ICMS: ${result.icmsApplicable ? 'Sim' : 'Não'}
-Destaca IPI: ${result.ipiApplicable ? 'Sim' : 'Não'}
-CFOP Entrada: ${result.cfopEntradaVinculado ?? '-'}
-Gera Crédito: ${result.geraCredito ? 'Sim' : 'Não'}
-Tem ST: ${result.temST ? 'Sim' : 'Não'}
-
-Observação:
-${result.observation ?? '-'}
-
-Informações Complementares:
-${result.informacoesComplementares ?? '-'}
-
-Base Legal:
-${result.baseLegal ?? '-'}
-    `.trim();
+    const text = `SNAP FISK — ORIENTAÇÃO FISCAL\nCFOP: ${result.cfop ?? '-'}\nCST/CSOSN: ${result.cstCsosn ?? '-'}\nICMS: ${result.icmsApplicable ? 'Sim' : 'Não'}\nIPI: ${result.ipiApplicable ? 'Sim' : 'Não'}\nNatureza: ${result.naturezaOperacao ?? '-'}\n\nInformações Complementares:\n${result.informacoesComplementares ?? '-'}\n\nBase Legal:\n${result.baseLegal ?? '-'}`.trim();
     copy(text, 'all');
   };
 
   return (
     <div>
+      {/* Atalho para emitir NF */}
+      <div className="card" style={{ background: 'linear-gradient(135deg, var(--primary-dark), var(--primary))', border: 'none', cursor: 'pointer' }} onClick={onEmit}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span style={{ fontSize: 32 }}>📄</span>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: 16 }}>Emitir NF-e</div>
+            <div style={{ fontSize: 13, opacity: 0.85 }}>Com preenchimento automático dos campos fiscais</div>
+          </div>
+          <span style={{ marginLeft: 'auto', fontSize: 20 }}>→</span>
+        </div>
+      </div>
+
       <div className="card">
-        <div className="card-title">Nova Consulta Fiscal</div>
+        <div className="card-title">Consultar Motor Fiscal</div>
 
         <div className="form-group">
           <label className="form-label">UF Origem</label>
@@ -174,9 +145,7 @@ ${result.baseLegal ?? '-'}
             <label className="form-label">Finalidade</label>
             <select className="form-select" value={purpose} onChange={e => setPurpose(e.target.value)}>
               <option value="">Selecione...</option>
-              {(PURPOSES[operation] ?? []).map(p => (
-                <option key={p.value} value={p.value}>{p.label}</option>
-              ))}
+              {(PURPOSES[operation] ?? []).map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
             </select>
           </div>
         )}
@@ -190,11 +159,7 @@ ${result.baseLegal ?? '-'}
 
         {error && <div className="alert alert-danger">{error}</div>}
 
-        <button
-          className="btn btn-primary"
-          onClick={handleConsult}
-          disabled={loading || !operation || !purpose}
-        >
+        <button className="btn btn-primary" onClick={handleConsult} disabled={loading || !operation || !purpose}>
           {loading ? 'Consultando...' : '🔍 Consultar Motor Fiscal'}
         </button>
       </div>
@@ -220,27 +185,15 @@ ${result.baseLegal ?? '-'}
                   <div className="result-value">{result.cstCsosn}</div>
                 </div>
                 <div className="result-item">
-                  <div className="result-label">Destaca ICMS</div>
+                  <div className="result-label">ICMS</div>
                   <div className={`result-value small ${result.icmsApplicable ? 'text-warning' : 'text-success'}`}>
-                    {result.icmsApplicable ? 'Sim' : 'Não'}
+                    {result.icmsApplicable ? 'Destaca' : 'Não destaca'}
                   </div>
                 </div>
                 <div className="result-item">
-                  <div className="result-label">Destaca IPI</div>
+                  <div className="result-label">IPI</div>
                   <div className={`result-value small ${result.ipiApplicable ? 'text-warning' : 'text-success'}`}>
-                    {result.ipiApplicable ? 'Sim' : 'Não'}
-                  </div>
-                </div>
-                {result.cfopEntradaVinculado && (
-                  <div className="result-item">
-                    <div className="result-label">CFOP Entrada</div>
-                    <div className="result-value small">{result.cfopEntradaVinculado}</div>
-                  </div>
-                )}
-                <div className="result-item">
-                  <div className="result-label">Gera Crédito</div>
-                  <div className={`result-value small ${result.geraCredito ? 'text-success' : 'text-muted'}`}>
-                    {result.geraCredito ? 'Sim' : 'Não'}
+                    {result.ipiApplicable ? 'Destaca' : 'Não destaca'}
                   </div>
                 </div>
               </div>
@@ -249,16 +202,6 @@ ${result.baseLegal ?? '-'}
                 <div className="result-block">
                   <div className="result-block-label">Natureza da Operação</div>
                   <div className="result-block-text fw-700">{result.naturezaOperacao}</div>
-                </div>
-              )}
-
-              {result.observation && (
-                <div className="result-block">
-                  <div className="result-block-label">Observação</div>
-                  <div className="result-block-text">{result.observation}</div>
-                  <button className="copy-btn" onClick={() => copy(result.observation, 'obs')}>
-                    {copied === 'obs' ? '✅' : '📋'}
-                  </button>
                 </div>
               )}
 
@@ -283,10 +226,12 @@ ${result.baseLegal ?? '-'}
               )}
 
               {result.mensagemAlerta && (
-                <div className="alert alert-warning">
-                  ⚠️ {result.mensagemAlerta}
-                </div>
+                <div className="alert alert-warning">⚠️ {result.mensagemAlerta}</div>
               )}
+
+              <button className="btn btn-primary mt-16" onClick={onEmit}>
+                📄 Emitir NF-e com esses dados →
+              </button>
             </>
           ) : (
             <div className="alert alert-warning">
