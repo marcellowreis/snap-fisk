@@ -6,8 +6,15 @@ import jwt from 'jsonwebtoken';
 import { resolveFiscalRule } from './fiscal-engine';
 import { prisma } from './prisma';
 
+import path from 'path';
+
 const app = express();
 app.use(express.json());
+
+// Servir frontend
+const frontendDist = path.join(process.cwd(), 'frontend', 'dist');
+app.use(express.static(frontendDist));
+
 
 const JWT_SECRET = process.env.JWT_SECRET ?? 'snapfisk-secret-dev';
 
@@ -348,6 +355,11 @@ app.post('/api/billing/:chargeId/confirm', authenticate, async (req, res) => {
 });
 
 // ─── INICIALIZAÇÃO ───────────────────────────────────────────────────────────
+
+// Rota catch-all para o React (SPA)
+app.get('*', (_req, res) => {
+  res.sendFile(path.join(frontendDist, 'index.html'));
+});
 
 const seedPlans = async () => {
   const plans = [
