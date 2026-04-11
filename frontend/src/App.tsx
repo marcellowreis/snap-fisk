@@ -14,10 +14,23 @@ export type User = {
   subscription?: any;
 };
 
+export type FiscalContext = {
+  operation: string;
+  purpose: string;
+  originUf: string;
+  destinationUf: string;
+  cfop: string;
+  cstCsosn: string;
+  naturezaOperacao: string;
+  informacoesComplementares: string;
+  mensagemAlerta: string;
+};
+
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'home' | 'emit' | 'history' | 'plans'>('home');
+  const [fiscalContext, setFiscalContext] = useState<FiscalContext | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -34,6 +47,17 @@ export default function App() {
     localStorage.removeItem('token');
     setUser(null);
     setTab('home');
+    setFiscalContext(null);
+  };
+
+  const handleEmitWithContext = (ctx: FiscalContext) => {
+    setFiscalContext(ctx);
+    setTab('emit');
+  };
+
+  const handleEmitDirect = () => {
+    setFiscalContext(null);
+    setTab('emit');
   };
 
   if (loading) return (
@@ -56,8 +80,21 @@ export default function App() {
       </header>
 
       <main className="page">
-        {tab === 'home' && <Home user={user} onNeedPlan={() => setTab('plans')} onEmit={() => setTab('emit')} />}
-        {tab === 'emit' && <Emit user={user} onBack={() => setTab('home')} />}
+        {tab === 'home' && (
+          <Home
+            user={user}
+            onNeedPlan={() => setTab('plans')}
+            onEmit={handleEmitDirect}
+            onEmitWithContext={handleEmitWithContext}
+          />
+        )}
+        {tab === 'emit' && (
+          <Emit
+            user={user}
+            fiscalContext={fiscalContext}
+            onBack={() => { setTab('home'); setFiscalContext(null); }}
+          />
+        )}
         {tab === 'history' && <History />}
         {tab === 'plans' && <Plans user={user} onSuccess={() => setTab('home')} />}
       </main>
@@ -67,7 +104,7 @@ export default function App() {
           <span className="nav-icon">🔍</span>
           Consultar
         </button>
-        <button className={`nav-item ${tab === 'emit' ? 'active' : ''}`} onClick={() => setTab('emit')}>
+        <button className={`nav-item ${tab === 'emit' ? 'active' : ''}`} onClick={handleEmitDirect}>
           <span className="nav-icon">📄</span>
           Emitir NF
         </button>
