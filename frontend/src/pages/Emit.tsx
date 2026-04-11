@@ -812,11 +812,27 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
               </div>
               <div className="form-group">
                 <label className="form-label">Qtd</label>
-                <input className="form-input" type="number" min="0.01" step="0.01" value={item.qCom} onChange={e => updateItem(item.id, { qCom: parseFloat(e.target.value) || 0 })} />
+                <input
+                  className="form-input"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="1"
+                  value={item.qCom === 0 ? '' : item.qCom}
+                  onChange={e => updateItem(item.id, { qCom: parseFloat(e.target.value) || 0 })}
+                />
               </div>
               <div className="form-group">
                 <label className="form-label">Vl. Unit.</label>
-                <input className="form-input" type="number" min="0.01" step="0.01" value={item.vUnCom} onChange={e => updateItem(item.id, { vUnCom: parseFloat(e.target.value) || 0 })} />
+                <input
+                  className="form-input"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  placeholder="0,00"
+                  value={item.vUnCom === 0 ? '' : item.vUnCom}
+                  onChange={e => updateItem(item.id, { vUnCom: parseFloat(e.target.value) || 0 })}
+                />
               </div>
             </div>
 
