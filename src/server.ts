@@ -6,7 +6,12 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { resolveFiscalRule } from './fiscal-engine';
 import fs from 'fs';
-import path from 'path';
+import { prisma } from './prisma';
+
+const app = express();
+app.use(express.json({ limit: '10mb' }));
+
+const JWT_SECRET = process.env.JWT_SECRET ?? 'snapfisk-secret-dev';
 
 // Carregar tabela NCM oficial
 let ncmTable: Array<{ c: string; d: string }> = [];
@@ -17,12 +22,6 @@ try {
 } catch {
   console.warn('⚠️ ncm_table.json não encontrado — busca NCM desabilitada');
 }
-import { prisma } from './prisma';
-
-const app = express();
-app.use(express.json({ limit: '10mb' }));
-
-const JWT_SECRET = process.env.JWT_SECRET ?? 'snapfisk-secret-dev';
 
 // Servir frontend
 const frontendDist = path.join(process.cwd(), 'frontend', 'dist');
@@ -107,7 +106,10 @@ const productSchema = z.object({
 
 const customerSchema = z.object({
   tipoPessoa: z.enum(['PF', 'PJ']).default('PF'),
-  cpfCnpj: z.string().min(1),
+  cpfCnpj: z
+    .string()
+    .min(1)
+    .transform((val) => val.replace(/\D/g, '')),
   nome: z.string().min(1),
   ie: z.string().optional(),
   indIEDest: z.string().default('9'),
@@ -696,23 +698,40 @@ app.get('/api/customers', authenticate, async (req, res) => {
 
 app.post('/api/customers', authenticate, async (req, res) => {
   const p = customerSchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Dados inválidos.', details: p.error.flatten() });
-  const cpfCnpjClean = cleanDoc(p.data.cpfCnpj);
-  const customer = await prisma.customer.create({
-    data: { userId: req.userId!, ...p.data, cpfCnpj: cpfCnpjClean },
-  });
-  return res.status(201).json(customer);
+  if (!p.success) {
+    return res.status(400).json({ error: 'Dados inválidos.', details: p.error.flatten() });
+  }
+  try {
+    // cpfCnpj já chega limpo pelo .transform() do schema
+    const customer = await prisma.customer.create({
+      data: { userId: req.userId!, ...p.data },
+    });
+    return res.status(201).json(customer);
+  } catch (err: any) {
+    console.error('Erro ao criar cliente:', err);
+    if (err.code === 'P2002') {
+      return res.status(409).json({ error: 'CPF/CNPJ já cadastrado.' });
+    }
+    return res.status(500).json({ error: 'Erro ao salvar cliente.', detail: err.message });
+  }
 });
 
 app.put('/api/customers/:id', authenticate, async (req, res) => {
   const p = customerSchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Dados inválidos.' });
-  const cpfCnpjClean = cleanDoc(p.data.cpfCnpj);
-  await prisma.customer.updateMany({
-    where: { id: req.params.id, userId: req.userId },
-    data: { ...p.data, cpfCnpj: cpfCnpjClean },
-  });
-  return res.json({ success: true });
+  if (!p.success) {
+    return res.status(400).json({ error: 'Dados inválidos.', details: p.error.flatten() });
+  }
+  try {
+    // cpfCnpj já chega limpo pelo .transform() do schema
+    await prisma.customer.updateMany({
+      where: { id: req.params.id, userId: req.userId },
+      data: { ...p.data },
+    });
+    return res.json({ success: true });
+  } catch (err: any) {
+    console.error('Erro ao atualizar cliente:', err);
+    return res.status(500).json({ error: 'Erro ao atualizar cliente.', detail: err.message });
+  }
 });
 
 app.delete('/api/customers/:id', authenticate, async (req, res) => {
