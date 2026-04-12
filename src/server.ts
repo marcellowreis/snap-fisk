@@ -77,6 +77,7 @@ const companySchema = z.object({
   nomeFantasia: z.string().optional(),
   cnpj: z.string().min(14).max(18),
   ie: z.string().optional(),
+  im: z.string().optional(),
   uf: z.string().length(2),
   cuf: z.string().optional(),
   cMun: z.string().optional(),
@@ -84,9 +85,10 @@ const companySchema = z.object({
   cep: z.string().optional(),
   logradouro: z.string().optional(),
   numero: z.string().optional(),
+  complemento: z.string().optional(),
   bairro: z.string().optional(),
   fone: z.string().optional(),
-  email: z.string().email().optional(),
+  email: z.string().email().optional().or(z.literal('')),
   taxRegime: z.enum(['simples_nacional', 'lucro_presumido', 'lucro_real', 'mei']),
   serie: z.string().optional(),
   proximaNF: z.number().optional(),
@@ -122,6 +124,7 @@ const customerSchema = z.object({
 
 const invoiceItemSchema = z.object({
   productId: z.string().optional(),
+  cProd: z.string().optional(),
   xProd: z.string().min(1),
   ncm: z.string().min(8),
   cfop: z.string().min(4),
@@ -324,7 +327,7 @@ const gerarXmlNFe = (invoice: any, company: any, customer: any, items: any[]): s
   const itenXml = items.map((item, idx) => `
     <det nItem="${idx + 1}">
       <prod>
-        <cProd>${item.cProd || String(idx + 1).padStart(13, '0')}</cProd>
+        <cProd>${item.cProd || String(idx + 1).padStart(13, '0').padStart(13, '2')}</cProd>
         <cEAN>${item.ean || 'SEM GTIN'}</cEAN>
         <xProd>${item.xProd}</xProd>
         <NCM>${cleanDoc(item.ncm)}</NCM>
