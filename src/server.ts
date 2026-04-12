@@ -526,6 +526,56 @@ app.get('/api/ncm/search', (req, res) => {
   return res.json(results);
 });
 
+// Sugestão NCM via IA
+app.get('/api/ncm/ai-suggest', async (req, res) => {
+  const { descricao } = req.query;
+  if (!descricao || typeof descricao !== 'string' || descricao.length < 2) {
+    return res.json(null);
+  }
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY || '',
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 200,
+        messages: [{
+          role: 'user',
+          content: `Você é um especialista em NCM (Nomenclatura Comum do Mercosul) brasileiro.
+Para o produto "${descricao}", retorne APENAS um JSON com este formato exato, sem explicações:
+{"ncm":"00000000","descricao":"descrição oficial resumida"}
+
+Regras:
+- NCM deve ter exatamente 8 dígitos sem pontos
+- Use a tabela NCM vigente no Brasil
+- Se for serviço, use ncm "00000000"
+- Retorne apenas o JSON, nada mais`
+        }],
+      }),
+    });
+
+    const data = await response.json() as any;
+    const text = data?.content?.[0]?.text?.trim() || '';
+
+    // Extrair JSON da resposta
+    const match = text.match(/\{[^}]+\}/);
+    if (!match) return res.json(null);
+
+    const result = JSON.parse(match[0]);
+    if (!result.ncm || result.ncm.length !== 8) return res.json(null);
+
+    return res.json(result);
+  } catch (e) {
+    console.error('Erro na sugestão NCM via IA:', e);
+    return res.json(null);
+  }
+});
+
 // ─── AUTH ────────────────────────────────────────────────────────────────────
 
 app.post('/api/auth/register', async (req, res) => {
