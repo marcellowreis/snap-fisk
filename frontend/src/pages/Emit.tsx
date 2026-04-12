@@ -946,7 +946,17 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
         {tPag !== '90' && (
           <div className="form-group">
             <label className="form-label">Valor pago</label>
-            <input className="form-input" type="number" value={vPag} onChange={e => setVPag(parseFloat(e.target.value) || 0)} />
+            <input
+              className="form-input"
+              type="text"
+              inputMode="numeric"
+              placeholder="0,00"
+              value={vPag === 0 ? '' : vPag.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              onChange={e => {
+                const raw = e.target.value.replace(/\D/g, '');
+                setVPag(raw ? parseFloat(raw) / 100 : 0);
+              }}
+            />
           </div>
         )}
       </div>
