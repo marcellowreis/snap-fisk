@@ -116,6 +116,7 @@ model Customer {
   cep         String?
   logradouro  String?
   numero      String?
+  complemento String?   //
   bairro      String?
   xMun        String?
   cMun        String?
