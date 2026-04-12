@@ -341,18 +341,24 @@ export default function Emit({ user, fiscalContext, onBack }: Props) {
   // ─── PRODUTOS ──────────────────────────────────────────────────────────────
 
   const handleDescricaoChange = (itemId: string, descricao: string) => {
-    updateItem(itemId, { xProd: descricao });
+    updateItem(itemId, { xProd: descricao, ncm: '', ncmSugerido: undefined });
     if (ncmTimer.current[itemId]) clearTimeout(ncmTimer.current[itemId]);
     if (descricao.length < 3) return;
     ncmTimer.current[itemId] = setTimeout(async () => {
       try {
-        const data = await api.get(`/api/ncm/suggest?descricao=${encodeURIComponent(descricao)}`);
+        // Tenta primeiro sugestão via IA
+        const data = await api.get(`/api/ncm/ai-suggest?descricao=${encodeURIComponent(descricao)}`);
         if (data?.ncm) {
-          const item = items.find(i => i.id === itemId);
-          if (!item?.ncm) updateItem(itemId, { ncm: data.ncm, ncmSugerido: data.ncm });
+          updateItem(itemId, { ncm: data.ncm, ncmSugerido: data.ncm });
+          return;
+        }
+        // Fallback: mapeamento local
+        const local = await api.get(`/api/ncm/suggest?descricao=${encodeURIComponent(descricao)}`);
+        if (local?.ncm) {
+          updateItem(itemId, { ncm: local.ncm, ncmSugerido: local.ncm });
         }
       } catch {}
-    }, 600);
+    }, 800);
   };
 
   const handleNcmSearch = (itemId: string, termo: string) => {
@@ -803,8 +809,11 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
                 <label className="form-label" style={{ margin: 0 }}>
                   NCM
+                  {item.xProd.length >= 3 && !item.ncm && (
+                    <span style={{ color: 'var(--text-muted)', fontSize: 11, marginLeft: 6 }}>⏳ buscando...</span>
+                  )}
                   {item.ncmSugerido && item.ncm === item.ncmSugerido && (
-                    <span style={{ color: 'var(--success)', fontSize: 11, marginLeft: 6 }}>✓ sugerido</span>
+                    <span style={{ color: 'var(--success)', fontSize: 11, marginLeft: 6 }}>✅ sugerido pela IA</span>
                   )}
                 </label>
                 <button
