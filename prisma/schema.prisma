@@ -12,7 +12,7 @@ datasource db {
 model User {
   id           String   @id @default(uuid())
   cnpj         String   @unique
-  email        String   
+  email        String   @unique
   passwordHash String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -52,6 +52,7 @@ model Company {
   taxRegime    String
   serie        String   @default("0")
   proximaNF    Int      @default(1)
+  logo         String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
