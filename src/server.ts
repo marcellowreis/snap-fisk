@@ -107,7 +107,7 @@ const productSchema = z.object({
 
 const customerSchema = z.object({
   tipoPessoa: z.enum(['PF', 'PJ']).default('PF'),
-  cpfCnpj: z.string().min(1).transform(v => v.replace(/\D/g, '')).refine(v => v.length === 11 || v.length === 14, { message: 'CPF deve ter 11 dígitos ou CNPJ 14 dígitos.' }),
+  cpfCnpj: z.string().min(1),
   nome: z.string().min(1),
   ie: z.string().optional(),
   indIEDest: z.string().default('9'),
