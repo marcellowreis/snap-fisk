@@ -5,6 +5,18 @@ import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { resolveFiscalRule } from './fiscal-engine';
+import fs from 'fs';
+import path from 'path';
+
+// Carregar tabela NCM oficial
+let ncmTable: Array<{ c: string; d: string }> = [];
+try {
+  const ncmPath = path.join(process.cwd(), 'ncm_table.json');
+  ncmTable = JSON.parse(fs.readFileSync(ncmPath, 'utf-8'));
+  console.log(`✅ Tabela NCM carregada: ${ncmTable.length} códigos`);
+} catch {
+  console.warn('⚠️ ncm_table.json não encontrado — busca NCM desabilitada');
+}
 import { prisma } from './prisma';
 
 const app = express();
@@ -92,15 +104,16 @@ const productSchema = z.object({
 
 const customerSchema = z.object({
   tipoPessoa: z.enum(['PF', 'PJ']).default('PF'),
-  cpfCnpj: z.string().min(11).max(18).transform(v => v.replace(/\D/g, '')),
+  cpfCnpj: z.string().min(1).transform(v => v.replace(/\D/g, '')).refine(v => v.length === 11 || v.length === 14, { message: 'CPF deve ter 11 dígitos ou CNPJ 14 dígitos.' }),
   nome: z.string().min(1),
   ie: z.string().optional(),
   indIEDest: z.string().default('9'),
-  email: z.string().email().optional(),
+  email: z.string().email({ message: 'E-mail inválido.' }),
   fone: z.string().optional(),
   cep: z.string().optional(),
   logradouro: z.string().optional(),
   numero: z.string().optional(),
+  complemento: z.string().optional(),
   bairro: z.string().optional(),
   xMun: z.string().optional(),
   cMun: z.string().optional(),
@@ -153,31 +166,96 @@ const cleanDoc = (doc: string) => doc.replace(/\D/g, '');
 
 // Sugestão de NCM baseada na descrição do produto
 const suggestNcm = (descricao: string): { ncm: string; descricao: string } | null => {
-  const d = descricao.toLowerCase();
+  const d = descricao.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // remove acentos
   const suggestions: Array<{ keywords: string[]; ncm: string; descricao: string }> = [
-    { keywords: ['farol', 'lanterna', 'luz', 'iluminacao', 'pisca'], ncm: '85122011', descricao: 'Faróis e projetores' },
-    { keywords: ['retrovisor', 'espelho'], ncm: '70091000', descricao: 'Espelhos retrovisores' },
-    { keywords: ['para-choque', 'parachoque', 'parachoques'], ncm: '87087010', descricao: 'Para-choques' },
-    { keywords: ['pneu', 'borracha', 'camara de ar'], ncm: '40112000', descricao: 'Pneus de borracha' },
-    { keywords: ['motor', 'motorizacao'], ncm: '84089000', descricao: 'Motores' },
-    { keywords: ['freio', 'pastilha', 'disco de freio'], ncm: '87083000', descricao: 'Freios e partes' },
-    { keywords: ['bateria', 'acumulador'], ncm: '85072000', descricao: 'Baterias' },
-    { keywords: ['filtro de oleo', 'filtro ar', 'filtro'], ncm: '84212300', descricao: 'Filtros' },
-    { keywords: ['camiseta', 'camisa', 'blusa', 'camiseta'], ncm: '61091000', descricao: 'Camisetas de malha' },
-    { keywords: ['calca', 'bermuda', 'short'], ncm: '62034200', descricao: 'Calças de algodão' },
-    { keywords: ['sapato', 'tenis', 'calcado', 'chinelo'], ncm: '64041100', descricao: 'Calçados' },
+    // Veículos e autopeças
+    { keywords: ['farol', 'lanterna', 'luz dianteira', 'pisca'], ncm: '85122011', descricao: 'Faróis e projetores' },
+    { keywords: ['retrovisor', 'espelho retrovisor'], ncm: '70091000', descricao: 'Espelhos retrovisores' },
+    { keywords: ['para-choque', 'parachoque'], ncm: '87087010', descricao: 'Para-choques' },
+    { keywords: ['pneu', 'camara de ar'], ncm: '40112000', descricao: 'Pneus de borracha' },
+    { keywords: ['motor', 'motorizacao', 'motor de arranque'], ncm: '84089000', descricao: 'Motores' },
+    { keywords: ['freio', 'pastilha', 'disco de freio', 'lona de freio'], ncm: '87083000', descricao: 'Freios e partes' },
+    { keywords: ['bateria', 'acumulador', 'bateria automotiva'], ncm: '85072000', descricao: 'Baterias' },
+    { keywords: ['filtro de oleo', 'filtro de ar', 'filtro de combustivel', 'filtro'], ncm: '84212300', descricao: 'Filtros' },
+    { keywords: ['amortecedor', 'mola', 'suspensao'], ncm: '87088000', descricao: 'Amortecedores' },
+    { keywords: ['correia', 'correia dentada', 'correia alternador'], ncm: '40103990', descricao: 'Correias' },
+    { keywords: ['vela', 'vela de ignicao', 'vela de ignição'], ncm: '85111000', descricao: 'Velas de ignição' },
+    { keywords: ['radiador', 'resfriamento'], ncm: '87089100', descricao: 'Radiadores' },
+    { keywords: ['rolamento', 'cubo de roda'], ncm: '84821010', descricao: 'Rolamentos' },
+    { keywords: ['escapamento', 'silencioso', 'cano de escapamento'], ncm: '87089200', descricao: 'Silenciosos e tubos de escape' },
+    { keywords: ['embreagem', 'disco de embreagem'], ncm: '87083100', descricao: 'Embreagens' },
+    // Roupas e calçados
+    { keywords: ['camiseta', 'camisa', 'blusa', 'regata'], ncm: '61091000', descricao: 'Camisetas de malha' },
+    { keywords: ['calca', 'bermuda', 'short', 'jeans'], ncm: '62034200', descricao: 'Calças de algodão' },
+    { keywords: ['vestido', 'saia'], ncm: '61044200', descricao: 'Vestidos de malha' },
+    { keywords: ['casaco', 'jaqueta', 'sobretudo', 'moletom'], ncm: '61011000', descricao: 'Casacos e jaquetas' },
+    { keywords: ['meia', 'meias'], ncm: '61152200', descricao: 'Meias' },
+    { keywords: ['roupa intima', 'calcinha', 'cueca', 'sutica'], ncm: '61082200', descricao: 'Roupas íntimas' },
+    { keywords: ['sapato', 'tenis', 'calcado', 'chinelo', 'sandalia', 'bota'], ncm: '64041100', descricao: 'Calçados' },
+    // Eletrônicos
     { keywords: ['notebook', 'computador', 'laptop'], ncm: '84713012', descricao: 'Computadores portáteis' },
-    { keywords: ['celular', 'smartphone', 'telefone'], ncm: '85171231', descricao: 'Aparelhos telefônicos' },
-    { keywords: ['tablet'], ncm: '84713019', descricao: 'Tablets' },
-    { keywords: ['televisao', 'tv', 'monitor'], ncm: '85287210', descricao: 'Aparelhos receptores de televisão' },
+    { keywords: ['celular', 'smartphone', 'iphone', 'android'], ncm: '85171231', descricao: 'Aparelhos telefônicos' },
+    { keywords: ['tablet', 'ipad'], ncm: '84713019', descricao: 'Tablets' },
+    { keywords: ['televisao', 'tv', 'televisor'], ncm: '85287210', descricao: 'Aparelhos receptores de televisão' },
+    { keywords: ['monitor', 'tela'], ncm: '85285200', descricao: 'Monitores' },
+    { keywords: ['impressora'], ncm: '84433200', descricao: 'Impressoras' },
+    { keywords: ['teclado', 'mouse', 'periferico'], ncm: '84716000', descricao: 'Teclados e mouses' },
+    { keywords: ['fone', 'headphone', 'headset', 'auricular'], ncm: '85183000', descricao: 'Fones de ouvido' },
+    { keywords: ['camera', 'webcam', 'fotografica'], ncm: '85258090', descricao: 'Câmeras' },
+    { keywords: ['pendrive', 'usb', 'memoria flash'], ncm: '84717012', descricao: 'Memórias flash' },
+    { keywords: ['hd', 'ssd', 'disco rigido'], ncm: '84717090', descricao: 'Unidades de disco' },
+    // Eletrodomésticos
     { keywords: ['geladeira', 'refrigerador', 'freezer'], ncm: '84181021', descricao: 'Refrigeradores' },
-    { keywords: ['maquina de lavar', 'lavadora'], ncm: '84501110', descricao: 'Máquinas de lavar roupa' },
+    { keywords: ['maquina de lavar', 'lavadora', 'lava e seca'], ncm: '84501110', descricao: 'Máquinas de lavar roupa' },
     { keywords: ['ar condicionado', 'split', 'climatizador'], ncm: '84151012', descricao: 'Ar condicionado' },
-    { keywords: ['mesa', 'cadeira', 'movel', 'sofa'], ncm: '94036000', descricao: 'Móveis de madeira' },
-    { keywords: ['medicamento', 'remedio', 'comprimido', 'capsula'], ncm: '30049099', descricao: 'Medicamentos' },
-    { keywords: ['shampoo', 'cosmetico', 'perfume', 'creme'], ncm: '33051000', descricao: 'Xampus' },
-    { keywords: ['alimento', 'comida', 'biscoito', 'bolacha'], ncm: '19053100', descricao: 'Biscoitos' },
-    { keywords: ['ferramenta', 'chave', 'martelo', 'alicate'], ncm: '82055900', descricao: 'Ferramentas manuais' },
+    { keywords: ['microondas'], ncm: '85165000', descricao: 'Fornos de micro-ondas' },
+    { keywords: ['liquidificador', 'batedeira', 'processador'], ncm: '85094000', descricao: 'Liquidificadores' },
+    { keywords: ['ferro de passar', 'ferro eletrico'], ncm: '85160000', descricao: 'Ferros elétricos' },
+    { keywords: ['aspirador', 'aspirador de po'], ncm: '85081100', descricao: 'Aspiradores de pó' },
+    { keywords: ['ventilador'], ncm: '84145920', descricao: 'Ventiladores' },
+    { keywords: ['fogao', 'cooktop', 'forno'], ncm: '73211100', descricao: 'Fogões' },
+    // Móveis
+    { keywords: ['mesa', 'escrivaninha'], ncm: '94033000', descricao: 'Mesas' },
+    { keywords: ['cadeira', 'poltrona', 'banco'], ncm: '94013000', descricao: 'Cadeiras' },
+    { keywords: ['sofa', 'diva'], ncm: '94016100', descricao: 'Sofás' },
+    { keywords: ['cama', 'beliche'], ncm: '94017900', descricao: 'Camas' },
+    { keywords: ['armario', 'guarda-roupa', 'estante'], ncm: '94036000', descricao: 'Móveis de madeira' },
+    // Saúde
+    { keywords: ['medicamento', 'remedio', 'comprimido', 'capsula', 'farmaco'], ncm: '30049099', descricao: 'Medicamentos' },
+    { keywords: ['mascaras', 'mascara cirurgica', 'epi'], ncm: '63079020', descricao: 'Máscaras' },
+    { keywords: ['luva', 'luvas'], ncm: '39262000', descricao: 'Luvas' },
+    // Beleza e higiene
+    { keywords: ['shampoo', 'condicionador'], ncm: '33051000', descricao: 'Xampus' },
+    { keywords: ['perfume', 'desodorante', 'colonia'], ncm: '33030000', descricao: 'Perfumes' },
+    { keywords: ['creme', 'hidratante', 'cosmetico', 'maquiagem'], ncm: '33049900', descricao: 'Cosméticos' },
+    { keywords: ['sabonete', 'sabao'], ncm: '34011190', descricao: 'Sabonetes' },
+    // Alimentos
+    { keywords: ['biscoito', 'bolacha', 'cookie'], ncm: '19053100', descricao: 'Biscoitos' },
+    { keywords: ['chocolate', 'bombom'], ncm: '18069000', descricao: 'Chocolates' },
+    { keywords: ['cafe', 'cafe torrado'], ncm: '09012100', descricao: 'Café' },
+    { keywords: ['arroz'], ncm: '10063021', descricao: 'Arroz' },
+    { keywords: ['feijao'], ncm: '07133390', descricao: 'Feijão' },
+    { keywords: ['oleo', 'oleo de soja', 'azeite'], ncm: '15079011', descricao: 'Óleos vegetais' },
+    { keywords: ['agua mineral', 'agua'], ncm: '22011000', descricao: 'Água mineral' },
+    { keywords: ['refrigerante', 'suco'], ncm: '22021000', descricao: 'Refrigerantes' },
+    // Ferramentas e construção
+    { keywords: ['ferramenta', 'chave de fenda', 'chave inglesa', 'alicate', 'martelo'], ncm: '82055900', descricao: 'Ferramentas manuais' },
+    { keywords: ['parafuso', 'porca', 'bucha', 'rebite'], ncm: '73181500', descricao: 'Parafusos e porcas' },
+    { keywords: ['tinta', 'verniz', 'esmalte'], ncm: '32091000', descricao: 'Tintas' },
+    { keywords: ['cimento', 'argamassa'], ncm: '25232900', descricao: 'Cimentos' },
+    { keywords: ['cabo', 'fio eletrico', 'fio'], ncm: '85444900', descricao: 'Fios e cabos elétricos' },
+    { keywords: ['tomada', 'interruptor', 'disjuntor'], ncm: '85366990', descricao: 'Tomadas e interruptores' },
+    // Papelaria e escritório
+    { keywords: ['papel', 'resma', 'folha'], ncm: '48025610', descricao: 'Papel' },
+    { keywords: ['caneta', 'lapis', 'marcador'], ncm: '96081000', descricao: 'Canetas esferográficas' },
+    { keywords: ['caderno', 'agenda', 'bloco'], ncm: '48201000', descricao: 'Cadernos' },
+    // Brinquedos e esporte
+    { keywords: ['brinquedo', 'boneca', 'carrinho de crianca'], ncm: '95030000', descricao: 'Brinquedos' },
+    { keywords: ['bola', 'bola de futebol', 'bola de basquete'], ncm: '95066200', descricao: 'Bolas' },
+    { keywords: ['bicicleta', 'bike'], ncm: '87120010', descricao: 'Bicicletas' },
+    // Serviços (sem NCM específico — usar genérico)
+    { keywords: ['servico', 'manutencao', 'reparo', 'conserto', 'instalacao', 'montagem'], ncm: '00000000', descricao: 'Serviços em geral' },
   ];
 
   for (const s of suggestions) {
@@ -401,7 +479,7 @@ app.get('/api/plans', async (_req, res) => {
   return res.json(plans);
 });
 
-// Sugerir NCM por descrição
+// Sugerir NCM por descrição (mapeamento rápido)
 app.get('/api/ncm/suggest', (req, res) => {
   const { descricao } = req.query;
   if (!descricao || typeof descricao !== 'string') {
@@ -409,6 +487,43 @@ app.get('/api/ncm/suggest', (req, res) => {
   }
   const suggestion = suggestNcm(descricao);
   return res.json(suggestion);
+});
+
+// Busca NCM na tabela oficial
+app.get('/api/ncm/search', (req, res) => {
+  const { q } = req.query;
+  if (!q || typeof q !== 'string' || q.length < 2) {
+    return res.json([]);
+  }
+
+  const normalize = (s: string) =>
+    s.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9 ]/g, ' ');
+
+  const termos = normalize(q).split(' ').filter(t => t.length > 1);
+
+  // Se for número, busca pelo código
+  if (/^\d+$/.test(q.replace(/\./g, ''))) {
+    const codigo = q.replace(/\./g, '');
+    const results = ncmTable
+      .filter(n => n.c.startsWith(codigo))
+      .slice(0, 10)
+      .map(n => ({ codigo: n.c, descricao: n.d }));
+    return res.json(results);
+  }
+
+  // Busca por texto — todos os termos devem aparecer
+  const results = ncmTable
+    .filter(n => {
+      const desc = normalize(n.d);
+      return termos.every(t => desc.includes(t));
+    })
+    .slice(0, 10)
+    .map(n => ({ codigo: n.c, descricao: n.d }));
+
+  return res.json(results);
 });
 
 // ─── AUTH ────────────────────────────────────────────────────────────────────
