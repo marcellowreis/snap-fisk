@@ -51,6 +51,7 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
   const [serie, setSerie] = useState('0');
   const [proximaNF, setProximaNF] = useState(1);
 
+  const [logo, setLogo] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
   const [error, setError] = useState('');
@@ -75,7 +76,8 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
         setCMun(c.cMun || '');
         setFone(c.fone || '');
         setEmail(c.email || user.email || '');
-        setTaxRegime(c.taxRegime || 'simples_nacional');
+        setTaxRegime(c.taxRegime || 'mei');
+        setLogo(c.logo || '');
         setSerie(c.serie || '0');
         setProximaNF(c.proximaNF || 1);
       }
@@ -143,6 +145,18 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
     setShowPopup(false);
   };
 
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 500 * 1024) {
+      setError('Logo muito grande. Use uma imagem de até 500KB.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => setLogo(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
   const handleSave = async () => {
     if (!razaoSocial || !cnpj || !uf) {
       setError('Razão Social, CNPJ e UF são obrigatórios.');
@@ -168,7 +182,8 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
         cMun: cMun || undefined,
         fone: fone || undefined,
         email: email || undefined,
-        taxRegime,
+        taxRegime: 'mei',
+        logo: logo || undefined,
         serie,
         proximaNF,
       });
@@ -302,14 +317,57 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
           <input className="form-input" style={{ marginTop: 6 }} value={im} onChange={e => setIm(e.target.value)} placeholder="Nº da Inscrição Municipal" />
         </div>
 
+        {/* Regime fixo MEI */}
+        <input type="hidden" value="mei" />
+
+        {/* Logo da empresa */}
         <div className="form-group">
-          <label className="form-label">Regime Tributário</label>
-          <select className="form-select" value={taxRegime} onChange={e => setTaxRegime(e.target.value)}>
-            <option value="mei">MEI — Microempreendedor Individual</option>
-            <option value="simples_nacional">Simples Nacional</option>
-            <option value="lucro_presumido">Lucro Presumido</option>
-            <option value="lucro_real">Lucro Real</option>
-          </select>
+          <label className="form-label">Logo da Empresa (opcional)</label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 6 }}>
+            <div
+              style={{
+                width: 80, height: 80, borderRadius: 12,
+                border: '2px dashed var(--border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                overflow: 'hidden', background: 'var(--bg)', flexShrink: 0,
+              }}
+            >
+              {logo
+                ? <img src={logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                : <span style={{ fontSize: 28 }}>🏢</span>
+              }
+            </div>
+            <div>
+              <label
+                htmlFor="logo-upload"
+                style={{
+                  display: 'inline-block', padding: '8px 16px',
+                  background: 'var(--bg-input)', border: '1px solid var(--border)',
+                  borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600,
+                }}
+              >
+                📷 {logo ? 'Trocar logo' : 'Carregar logo'}
+              </label>
+              <input
+                id="logo-upload"
+                type="file"
+                accept="image/png,image/jpeg,image/svg+xml"
+                style={{ display: 'none' }}
+                onChange={handleLogoUpload}
+              />
+              {logo && (
+                <button
+                  onClick={() => setLogo('')}
+                  style={{ display: 'block', marginTop: 6, background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, cursor: 'pointer' }}
+                >
+                  ✕ Remover logo
+                </button>
+              )}
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
+                PNG, JPG ou SVG · Máx. 500KB
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
