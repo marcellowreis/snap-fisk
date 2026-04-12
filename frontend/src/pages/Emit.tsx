@@ -901,12 +901,15 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
                 <label className="form-label">Vl. Unit.</label>
                 <input
                   className="form-input"
-                  type="number"
-                  min="0.01"
-                  step="0.01"
+                  type="text"
+                  inputMode="numeric"
                   placeholder="0,00"
-                  value={item.vUnCom === 0 ? '' : item.vUnCom}
-                  onChange={e => updateItem(item.id, { vUnCom: parseFloat(e.target.value) || 0 })}
+                  value={item.vUnCom === 0 ? '' : item.vUnCom.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  onChange={e => {
+                    const raw = e.target.value.replace(/\D/g, '');
+                    const value = raw ? parseFloat(raw) / 100 : 0;
+                    updateItem(item.id, { vUnCom: value });
+                  }}
                 />
               </div>
             </div>
