@@ -117,15 +117,18 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
     if (clean.length !== 8) return;
     try {
       const res = await fetch(`https://viacep.com.br/ws/${clean}/json/`);
+      if (!res.ok) return;
       const data = await res.json();
       if (!data.erro) {
-        setLogradouro(data.logradouro || logradouro);
-        setBairro(data.bairro || bairro);
-        setXMun(data.localidade || xMun);
-        setCMun(data.ibge || cMun);
-        setUf(data.uf || uf);
+        setLogradouro(data.logradouro || '');
+        setBairro(data.bairro || '');
+        setXMun(data.localidade || '');
+        setCMun(data.ibge || '');
+        setUf(data.uf || 'SP');
       }
-    } catch {}
+    } catch (e) {
+      console.error('Erro ao buscar CEP:', e);
+    }
   };
 
   const confirmarPopup = () => {
@@ -278,17 +281,25 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
           <input className="form-input" value={nomeFantasia} onChange={e => setNomeFantasia(e.target.value)} />
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-          <div className="form-group">
-            <label className="form-label">IE <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>(Inscrição Estadual)</span></label>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <input className="form-input" value={ie} onChange={e => setIe(e.target.value)} placeholder="IE ou ISENTO" />
-            </div>
+        <div className="form-group">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <label className="form-label" style={{ margin: 0 }}>IE <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>(Inscrição Estadual)</span></label>
+            <a href="https://www.sintegra.gov.br" target="_blank" rel="noreferrer" style={{ fontSize: 11, color: 'var(--primary-light)' }}>Consultar Sintegra →</a>
           </div>
-          <div className="form-group">
-            <label className="form-label">IM <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>(Inscrição Municipal)</span></label>
-            <input className="form-input" value={im} onChange={e => setIm(e.target.value)} placeholder="Nº do alvará" />
+          <div style={{ display: 'flex', gap: 8, marginTop: 6 }}>
+            <input className="form-input" value={ie} onChange={e => setIe(e.target.value)} placeholder="IE ou ISENTO" />
+            <button className="btn btn-outline btn-sm" onClick={() => setIe('ISENTO')} style={{ whiteSpace: 'nowrap' }}>Isento</button>
           </div>
+        </div>
+
+        <div className="form-group">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <label className="form-label" style={{ margin: 0 }}>IM <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>(Inscrição Municipal)</span></label>
+            {uf === 'SP' && (
+              <a href="https://ccm.prefeitura.sp.gov.br" target="_blank" rel="noreferrer" style={{ fontSize: 11, color: 'var(--primary-light)' }}>Consultar CCM SP →</a>
+            )}
+          </div>
+          <input className="form-input" style={{ marginTop: 6 }} value={im} onChange={e => setIm(e.target.value)} placeholder="Nº da Inscrição Municipal" />
         </div>
 
         <div className="form-group">
@@ -308,13 +319,27 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
 
         <div className="form-group">
           <label className="form-label">CEP</label>
-          <input
-            className="form-input"
-            placeholder="00000-000"
-            value={cep}
-            onChange={e => { const f = formatCep(e.target.value); setCep(f); }}
-            onBlur={() => buscarCep(cep)}
-          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              className="form-input"
+              placeholder="00000-000"
+              value={cep}
+              onChange={e => {
+                const f = formatCep(e.target.value);
+                setCep(f);
+                if (f.replace(/\D/g, '').length === 8) buscarCep(f);
+              }}
+              onBlur={() => buscarCep(cep)}
+            />
+            <button
+              className="btn btn-outline btn-sm"
+              onClick={() => buscarCep(cep)}
+              style={{ whiteSpace: 'nowrap' }}
+              type="button"
+            >
+              🔍 Buscar
+            </button>
+          </div>
         </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: 8 }}>
