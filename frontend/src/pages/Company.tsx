@@ -208,10 +208,7 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
                 background: jaEmitiu === false ? 'rgba(99,102,241,0.1)' : 'var(--bg)',
               }}
             >
-              <div style={{ fontWeight: 700, marginBottom: 4 }}>🆕 Não — é minha primeira vez</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                Vamos começar com Série 0, Número 1
-              </div>
+              <div style={{ fontWeight: 700 }}>🆕 Não — é minha primeira vez</div>
             </div>
 
             <div
@@ -224,10 +221,7 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
                 background: jaEmitiu === true ? 'rgba(99,102,241,0.1)' : 'var(--bg)',
               }}
             >
-              <div style={{ fontWeight: 700, marginBottom: 4 }}>✅ Sim — já usei Sebrae ou outro emissor</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
-                Usaremos Série 3, Número 1 para evitar conflito com NFs anteriores
-              </div>
+              <div style={{ fontWeight: 700 }}>✅ Sim — já usei Sebrae ou outro emissor</div>
             </div>
           </div>
 
