@@ -12,7 +12,7 @@ datasource db {
 model User {
   id           String   @id @default(uuid())
   cnpj         String   @unique
-  email        String   
+  email        String   @unique
   passwordHash String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -37,6 +37,7 @@ model Company {
   nomeFantasia String?
   cnpj         String
   ie           String?
+  im           String?
   uf           String
   cuf          String   @default("35")
   cMun         String   @default("3550308")
@@ -44,6 +45,7 @@ model Company {
   cep          String?
   logradouro   String?
   numero       String?
+  complemento  String?
   bairro       String?
   fone         String?
   email        String?
