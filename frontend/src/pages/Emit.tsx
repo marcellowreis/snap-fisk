@@ -202,6 +202,10 @@ export default function Emit({ user, fiscalContext, onBack }: Props) {
   const [productSearch, setProductSearch] = useState<Record<string, string>>({});
   const [showProductList, setShowProductList] = useState<Record<string, boolean>>({});
   const [ncmAlerts, setNcmAlerts] = useState<Record<string, string>>({});
+  const [ncmSearch, setNcmSearch] = useState<Record<string, string>>({});
+  const [ncmResults, setNcmResults] = useState<Record<string, any[]>>({});
+  const [showNcmSearch, setShowNcmSearch] = useState<Record<string, boolean>>({});
+  const ncmSearchTimer = useRef<Record<string, any>>({});
 
   const [tPag, setTPag] = useState('90');
   const [vPag, setVPag] = useState(0);
@@ -349,6 +353,25 @@ export default function Emit({ user, fiscalContext, onBack }: Props) {
         }
       } catch {}
     }, 600);
+  };
+
+  const handleNcmSearch = (itemId: string, termo: string) => {
+    setNcmSearch(prev => ({ ...prev, [itemId]: termo }));
+    if (ncmSearchTimer.current[itemId]) clearTimeout(ncmSearchTimer.current[itemId]);
+    if (termo.length < 2) { setNcmResults(prev => ({ ...prev, [itemId]: [] })); return; }
+    ncmSearchTimer.current[itemId] = setTimeout(async () => {
+      try {
+        const results = await api.get(`/api/ncm/search?q=${encodeURIComponent(termo)}`);
+        setNcmResults(prev => ({ ...prev, [itemId]: results }));
+      } catch {}
+    }, 400);
+  };
+
+  const selectNcm = (itemId: string, codigo: string) => {
+    updateItem(itemId, { ncm: codigo });
+    setShowNcmSearch(prev => ({ ...prev, [itemId]: false }));
+    setNcmResults(prev => ({ ...prev, [itemId]: [] }));
+    setNcmAlerts(prev => { const n = { ...prev }; delete n[itemId]; return n; });
   };
 
   const handleNcmChange = async (itemId: string, ncm: string) => {
@@ -777,13 +800,56 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
             </div>
 
             <div className="form-group">
-              <label className="form-label">
-                NCM
-                {item.ncmSugerido && item.ncm === item.ncmSugerido && (
-                  <span style={{ color: 'var(--success)', fontSize: 11, marginLeft: 6 }}>✓ sugerido automaticamente</span>
-                )}
-              </label>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+                <label className="form-label" style={{ margin: 0 }}>
+                  NCM
+                  {item.ncmSugerido && item.ncm === item.ncmSugerido && (
+                    <span style={{ color: 'var(--success)', fontSize: 11, marginLeft: 6 }}>✓ sugerido</span>
+                  )}
+                </label>
+                <button
+                  style={{ background: 'none', border: 'none', color: 'var(--primary-light)', fontSize: 12, cursor: 'pointer' }}
+                  onClick={() => setShowNcmSearch(prev => ({ ...prev, [item.id]: !prev[item.id] }))}
+                >
+                  {showNcmSearch[item.id] ? '✕ Fechar busca' : '🔍 Buscar NCM'}
+                </button>
+              </div>
               <input className="form-input" placeholder="00000000" value={item.ncm} onChange={e => handleNcmChange(item.id, e.target.value)} />
+
+              {showNcmSearch[item.id] && (
+                <div style={{ marginTop: 8, background: 'var(--bg-card)', borderRadius: 8, padding: 10, border: '1px solid var(--border)' }}>
+                  <input
+                    className="form-input"
+                    placeholder="Digite descrição ou código NCM..."
+                    value={ncmSearch[item.id] ?? ''}
+                    onChange={e => handleNcmSearch(item.id, e.target.value)}
+                    style={{ marginBottom: 8 }}
+                    autoFocus
+                  />
+                  {ncmResults[item.id]?.length > 0 && (
+                    <div style={{ maxHeight: 200, overflowY: 'auto' }}>
+                      {ncmResults[item.id].map((r: any) => (
+                        <div
+                          key={r.codigo}
+                          onClick={() => selectNcm(item.id, r.codigo)}
+                          style={{ padding: '8px 10px', cursor: 'pointer', borderBottom: '1px solid var(--border)', fontSize: 13 }}
+                        >
+                          <span style={{ fontWeight: 700, color: 'var(--primary-light)' }}>{r.codigo}</span>
+                          <span style={{ color: 'var(--text-muted)', marginLeft: 8 }}>{r.descricao}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {ncmSearch[item.id]?.length >= 2 && ncmResults[item.id]?.length === 0 && (
+                    <div style={{ fontSize: 12, color: 'var(--text-muted)', textAlign: 'center', padding: 8 }}>
+                      Nenhum resultado. Tente outros termos.
+                    </div>
+                  )}
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
+                    Fonte: Tabela NCM Vigente — Resolução Gecex 812/2025
+                  </div>
+                </div>
+              )}
               {ncmAlerts[item.id] && (
                 <div style={{ marginTop: 6, background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.3)', borderRadius: 6, padding: '8px 10px', fontSize: 12, color: '#fbbf24' }}>
                   ⚠️ {ncmAlerts[item.id]}
