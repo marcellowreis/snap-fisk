@@ -22,4 +22,4 @@ COPY . .
 
 EXPOSE 8080
 
-CMD ["sh", "-c", "npx prisma db push && npx tsx prisma/seed.ts && npx tsx src/server.ts"]
+CMD ["sh", "-c", "npx prisma db push --accept-data-loss && npx tsx prisma/seed.ts && npx tsx src/server.ts"]
