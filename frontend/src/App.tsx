@@ -5,6 +5,7 @@ import History from './pages/History';
 import Plans from './pages/Plans';
 import Emit from './pages/Emit';
 import { api } from './api';
+import Company from './pages/Company';
 
 export type User = {
   id: string;
@@ -29,18 +30,29 @@ export type FiscalContext = {
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'home' | 'emit' | 'history' | 'plans'>('home');
+  const [tab, setTab] = useState<'home' | 'emit' | 'history' | 'plans' | 'company'>('home');
+  const [firstAccess, setFirstAccess] = useState(false);
   const [fiscalContext, setFiscalContext] = useState<FiscalContext | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) { setLoading(false); return; }
-    api.get('/api/me').then(setUser).catch(() => localStorage.removeItem('token')).finally(() => setLoading(false));
+    api.get('/api/me').then(u => {
+      setUser(u);
+      if (!u.company) {
+        setFirstAccess(true);
+        setTab('company');
+      }
+    }).catch(() => localStorage.removeItem('token')).finally(() => setLoading(false));
   }, []);
 
   const handleLogin = (token: string, userData: User) => {
     localStorage.setItem('token', token);
     setUser(userData);
+    if (!userData.company) {
+      setFirstAccess(true);
+      setTab('company');
+    }
   };
 
   const handleLogout = () => {
@@ -91,6 +103,17 @@ export default function App() {
         )}
         {tab === 'history' && <History />}
         {tab === 'plans' && <Plans user={user} onSuccess={() => setTab('home')} />}
+        {tab === 'company' && (
+          <Company
+            user={user}
+            isFirstAccess={firstAccess}
+            onSaved={company => {
+              setUser(prev => prev ? { ...prev, company } : prev);
+              setFirstAccess(false);
+              setTab('home');
+            }}
+          />
+        )}
       </main>
 
       <nav className="bottom-nav">
@@ -105,6 +128,10 @@ export default function App() {
         <button className={`nav-item ${tab === 'plans' ? 'active' : ''}`} onClick={() => setTab('plans')}>
           <span className="nav-icon">💳</span>
           Planos
+        </button>
+        <button className={`nav-item ${tab === 'company' ? 'active' : ''}`} onClick={() => setTab('company')}>
+          <span className="nav-icon">🏢</span>
+          Empresa
         </button>
       </nav>
     </div>
