@@ -46,7 +46,7 @@ export const resolveFiscalRule = async (
       { OR: [{ destinationUf: input.destinationUf }, { destinationUf: null }] },
       { OR: [{ operation: input.operation }, { operation: null }] },
       { OR: [{ purpose: input.purpose }, { purpose: null }] },
-      { OR: [{ taxRegime: input.taxRegime }, { taxRegime: null }] },
+      { OR: [{ taxRegime: input.taxRegime }, { taxRegime: input.taxRegime === 'mei' ? 'simples_nacional' : input.taxRegime }, { taxRegime: null }] },
     ],
   };
 
