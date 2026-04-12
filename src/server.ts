@@ -92,6 +92,7 @@ const companySchema = z.object({
   taxRegime: z.enum(['simples_nacional', 'lucro_presumido', 'lucro_real', 'mei']),
   serie: z.string().optional(),
   proximaNF: z.number().optional(),
+  logo: z.string().optional(),
 });
 
 const productSchema = z.object({
