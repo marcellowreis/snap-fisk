@@ -12,7 +12,7 @@ datasource db {
 model User {
   id           String   @id @default(uuid())
   cnpj         String   @unique
-  email        String   @unique
+  email        String   
   passwordHash String
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
