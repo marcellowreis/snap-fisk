@@ -6,11 +6,12 @@ async function main() {
   console.log('🌱 Iniciando seed de regras fiscais para MEI...');
 
   const rules = [
-    // ─── VENDAS DENTRO DO ESTADO ─────────────────────────────────────────────
-
+    // ─── VENDAS — REVENDA ─────────────────────────────────────────────────────
+    // O motor fiscal ajusta automaticamente:
+    //   5.102 (intraestadual) → 6.102 (interestadual) → 7.102 (exportação)
     {
-      originUf: 'SP',
-      destinationUf: 'SP',
+      originUf: null,
+      destinationUf: null,
       operation: 'venda',
       purpose: 'normal',
       taxRegime: 'simples_nacional',
@@ -23,14 +24,19 @@ async function main() {
       cfopEntradaVinculado: '1.102',
       geraCredito: false,
       temST: false,
-      observation: 'Venda de mercadoria dentro do estado — Simples Nacional sem destaque de ICMS.',
+      observation: 'Venda de mercadoria para revenda — Simples Nacional sem destaque de ICMS.',
       informacoesComplementares: 'Documento emitido por ME ou EPP optante pelo Simples Nacional. Não gera direito a crédito fiscal de ICMS.',
       baseLegal: 'LC 123/2006 — Art. 23. CSOSN 102 — Tributada pelo Simples Nacional sem permissão de crédito.',
       mensagemAlerta: null,
     },
+
+    // ─── VENDAS — CONSUMIDOR FINAL ────────────────────────────────────────────
+    // 5.102 intraestadual → 6.108 interestadual (consumidor final não contribuinte)
+    // O fiscal-engine.ts trata o 5→6 automaticamente
+    // Para consumidor final interestadual usamos CFOP 6.108 — cadastramos regra específica
     {
-      originUf: 'SP',
-      destinationUf: 'SP',
+      originUf: null,
+      destinationUf: null,
       operation: 'venda',
       purpose: 'consumidor_final_pf',
       taxRegime: 'simples_nacional',
@@ -43,57 +49,80 @@ async function main() {
       cfopEntradaVinculado: '1.102',
       geraCredito: false,
       temST: false,
-      observation: 'Venda para consumidor final PF dentro do estado — Simples Nacional.',
+      observation: 'Venda para consumidor final — Simples Nacional.',
       informacoesComplementares: 'Documento emitido por ME ou EPP optante pelo Simples Nacional. Não gera direito a crédito fiscal de ICMS.',
       baseLegal: 'LC 123/2006 — Art. 23. CSOSN 102.',
       mensagemAlerta: null,
     },
 
-    // ─── VENDAS PARA OUTRO ESTADO ─────────────────────────────────────────────
-
+    // ─── VENDAS — EXPORTAÇÃO (CFOP 7xxx) ─────────────────────────────────────
     {
       originUf: null,
-      destinationUf: null,
+      destinationUf: 'EX',
       operation: 'venda',
-      purpose: 'interestadual',
+      purpose: 'exportacao',
       taxRegime: 'simples_nacional',
-      cfop: '6.102',
-      cstCsosn: '102',
+      cfop: '7.102',
+      cstCsosn: '400',
       icmsApplicable: false,
       ipiApplicable: false,
-      priority: 8,
-      naturezaOperacao: 'Venda de Mercadoria Interestadual',
-      cfopEntradaVinculado: '2.102',
+      priority: 12,
+      naturezaOperacao: 'Exportação de Mercadoria',
+      cfopEntradaVinculado: null,
       geraCredito: false,
       temST: false,
-      observation: 'Venda de mercadoria para outro estado — Simples Nacional sem destaque de ICMS.',
-      informacoesComplementares: 'Documento emitido por ME ou EPP optante pelo Simples Nacional. Não gera direito a crédito fiscal de ICMS.',
-      baseLegal: 'LC 123/2006 — Art. 23. CSOSN 102.',
-      mensagemAlerta: 'Verificar necessidade de recolhimento de DIFAL se destinatário for consumidor final não contribuinte.',
+      observation: 'Exportação de mercadoria para o exterior — imune de ICMS e IPI.',
+      informacoesComplementares: 'Exportação de mercadoria. Operação imune de ICMS conforme CF/88 Art. 155, §2º, X, "a". Imune de IPI conforme CF/88 Art. 153, §3º, III.',
+      baseLegal: 'CF/88 Art. 155, §2º, X, "a". CF/88 Art. 153, §3º, III. LC 123/2006.',
+      mensagemAlerta: 'Exportação requer Registro de Exportação (RE) no SISCOMEX. Consulte um despachante aduaneiro.',
     },
+
+    // ─── VENDAS — IMPORTAÇÃO (CFOP 3xxx entrada) ─────────────────────────────
+    {
+      originUf: 'EX',
+      destinationUf: null,
+      operation: 'venda',
+      purpose: 'importacao',
+      taxRegime: 'simples_nacional',
+      cfop: '3.102',
+      cstCsosn: '102',
+      icmsApplicable: true,
+      ipiApplicable: true,
+      priority: 12,
+      naturezaOperacao: 'Importação de Mercadoria',
+      cfopEntradaVinculado: null,
+      geraCredito: false,
+      temST: false,
+      observation: 'Importação de mercadoria do exterior — sujeita a II, IPI, ICMS, PIS/COFINS importação.',
+      informacoesComplementares: 'Importação de mercadoria. Sujeita ao recolhimento de II, IPI, ICMS-Importação, PIS e COFINS-Importação. DI nº ___.',
+      baseLegal: 'CF/88 Art. 153, I (II). CF/88 Art. 153, IV (IPI). LC 123/2006. Lei 10.865/2004 (PIS/COFINS Importação).',
+      mensagemAlerta: 'Importação exige Declaração de Importação (DI) e desembaraço aduaneiro. Consulte um despachante aduaneiro.',
+    },
+
+    // ─── VENDAS — SUBSTITUIÇÃO TRIBUTÁRIA ────────────────────────────────────
     {
       originUf: null,
       destinationUf: null,
       operation: 'venda',
-      purpose: 'consumidor_final_pf_interestadual',
+      purpose: 'substituicao_tributaria',
       taxRegime: 'simples_nacional',
-      cfop: '6.108',
-      cstCsosn: '102',
+      cfop: '5.405',
+      cstCsosn: '500',
       icmsApplicable: false,
       ipiApplicable: false,
-      priority: 9,
-      naturezaOperacao: 'Venda de Mercadoria a Consumidor Final Não Contribuinte Interestadual',
-      cfopEntradaVinculado: '2.108',
+      priority: 10,
+      naturezaOperacao: 'Venda de Mercadoria com ST',
+      cfopEntradaVinculado: '1.405',
       geraCredito: false,
-      temST: false,
-      observation: 'Venda para consumidor final PF em outro estado — verifique DIFAL.',
-      informacoesComplementares: 'Documento emitido por ME ou EPP optante pelo Simples Nacional. Operação sujeita ao DIFAL — EC 87/2015.',
-      baseLegal: 'LC 123/2006 — Art. 23. EC 87/2015. Convênio ICMS 93/2015.',
-      mensagemAlerta: 'Atenção: Esta operação pode estar sujeita ao recolhimento de DIFAL. Consulte seu contador.',
+      temST: true,
+      observation: 'Venda de mercadoria sujeita à substituição tributária — ICMS já recolhido pelo fabricante.',
+      informacoesComplementares: 'Venda de mercadoria com ICMS retido por substituição tributária. ICMS-ST já recolhido anteriormente na cadeia.',
+      baseLegal: 'LC 123/2006. CSOSN 500 — CRT com ICMS cobrado anteriormente por ST.',
+      mensagemAlerta: 'Atenção: mercadoria com ST. Não destacar ICMS. Informar base de cálculo e valor do ICMS-ST retido.',
     },
 
     // ─── REMESSA PARA CONSERTO ────────────────────────────────────────────────
-
+    // 5.915 intraestadual → 6.915 interestadual (ajuste automático)
     {
       originUf: null,
       destinationUf: null,
@@ -109,34 +138,13 @@ async function main() {
       cfopEntradaVinculado: '1.915',
       geraCredito: false,
       temST: false,
-      observation: 'Remessa de mercadoria para conserto dentro do estado — não incide ICMS.',
+      observation: 'Remessa de mercadoria para conserto — não incide ICMS.',
       informacoesComplementares: 'Remessa para conserto. Não incide ICMS conforme art. 7º, IX do RICMS/SP. Prazo para retorno: 180 dias.',
       baseLegal: 'RICMS/SP — Art. 7º, IX. CSOSN 400 — Imune/Não tributada.',
       mensagemAlerta: 'Atenção: emitir NF de retorno (CFOP 5.916) quando o bem retornar após o conserto.',
     },
-    {
-      originUf: null,
-      destinationUf: null,
-      operation: 'remessa',
-      purpose: 'conserto_interestadual',
-      taxRegime: 'simples_nacional',
-      cfop: '6.915',
-      cstCsosn: '400',
-      icmsApplicable: false,
-      ipiApplicable: false,
-      priority: 9,
-      naturezaOperacao: 'Remessa para Conserto Interestadual',
-      cfopEntradaVinculado: '2.915',
-      geraCredito: false,
-      temST: false,
-      observation: 'Remessa de mercadoria para conserto em outro estado — não incide ICMS.',
-      informacoesComplementares: 'Remessa para conserto interestadual. Não incide ICMS. Prazo para retorno: 180 dias.',
-      baseLegal: 'RIPI/2010 — Art. 43, XI. Convênio ICMS 19/91.',
-      mensagemAlerta: 'Atenção: emitir NF de retorno (CFOP 6.916) quando o bem retornar após o conserto.',
-    },
 
     // ─── RETORNO DE CONSERTO ──────────────────────────────────────────────────
-
     {
       originUf: null,
       destinationUf: null,
@@ -152,34 +160,13 @@ async function main() {
       cfopEntradaVinculado: '1.916',
       geraCredito: false,
       temST: false,
-      observation: 'Retorno de mercadoria após conserto dentro do estado — não incide ICMS.',
+      observation: 'Retorno de mercadoria após conserto — não incide ICMS.',
       informacoesComplementares: 'Retorno de mercadoria enviada para conserto. Não incide ICMS. Referente à NF de remessa nº ___.',
       baseLegal: 'RICMS/SP — Art. 7º, IX. CSOSN 400.',
       mensagemAlerta: 'Informar o número da NF de remessa original nas informações complementares.',
     },
-    {
-      originUf: null,
-      destinationUf: null,
-      operation: 'retorno',
-      purpose: 'conserto_interestadual',
-      taxRegime: 'simples_nacional',
-      cfop: '6.916',
-      cstCsosn: '400',
-      icmsApplicable: false,
-      ipiApplicable: false,
-      priority: 9,
-      naturezaOperacao: 'Retorno de Mercadoria Enviada para Conserto Interestadual',
-      cfopEntradaVinculado: '2.916',
-      geraCredito: false,
-      temST: false,
-      observation: 'Retorno de mercadoria após conserto em outro estado — não incide ICMS.',
-      informacoesComplementares: 'Retorno de mercadoria enviada para conserto interestadual. Não incide ICMS. Referente à NF de remessa nº ___.',
-      baseLegal: 'Convênio ICMS 19/91. CSOSN 400.',
-      mensagemAlerta: 'Informar o número da NF de remessa original nas informações complementares.',
-    },
 
     // ─── REMESSA PARA DEMONSTRAÇÃO ────────────────────────────────────────────
-
     {
       originUf: null,
       destinationUf: null,
@@ -200,29 +187,8 @@ async function main() {
       baseLegal: 'Convênio ICMS 83/2000. CSOSN 400.',
       mensagemAlerta: 'Prazo máximo de 60 dias para retornar ou faturar o produto em demonstração.',
     },
-    {
-      originUf: null,
-      destinationUf: null,
-      operation: 'remessa',
-      purpose: 'demonstracao_interestadual',
-      taxRegime: 'simples_nacional',
-      cfop: '6.912',
-      cstCsosn: '400',
-      icmsApplicable: false,
-      ipiApplicable: false,
-      priority: 9,
-      naturezaOperacao: 'Remessa para Demonstração Interestadual',
-      cfopEntradaVinculado: '2.912',
-      geraCredito: false,
-      temST: false,
-      observation: 'Remessa de mercadoria para demonstração em outro estado — não incide ICMS.',
-      informacoesComplementares: 'Remessa para demonstração interestadual. Não incide ICMS conforme Convênio ICMS 83/00. Prazo para retorno: 60 dias.',
-      baseLegal: 'Convênio ICMS 83/2000. CSOSN 400.',
-      mensagemAlerta: 'Prazo máximo de 60 dias para retornar ou faturar o produto em demonstração.',
-    },
 
     // ─── RETORNO DE DEMONSTRAÇÃO ──────────────────────────────────────────────
-
     {
       originUf: null,
       destinationUf: null,
@@ -245,7 +211,6 @@ async function main() {
     },
 
     // ─── DEVOLUÇÃO ────────────────────────────────────────────────────────────
-
     {
       originUf: null,
       destinationUf: null,
@@ -261,28 +226,8 @@ async function main() {
       cfopEntradaVinculado: '1.201',
       geraCredito: false,
       temST: false,
-      observation: 'Devolução de mercadoria comprada para comercialização dentro do estado.',
+      observation: 'Devolução de mercadoria comprada para comercialização.',
       informacoesComplementares: 'Devolução de mercadoria. Referente à NF de compra nº ___, emitida em ___. Simples Nacional — não gera crédito de ICMS.',
-      baseLegal: 'LC 123/2006. CSOSN 400.',
-      mensagemAlerta: 'Informar número e data da NF original de compra nas informações complementares.',
-    },
-    {
-      originUf: null,
-      destinationUf: null,
-      operation: 'devolucao',
-      purpose: 'compra_interestadual',
-      taxRegime: 'simples_nacional',
-      cfop: '6.201',
-      cstCsosn: '400',
-      icmsApplicable: false,
-      ipiApplicable: false,
-      priority: 9,
-      naturezaOperacao: 'Devolução de Compra para Comercialização Interestadual',
-      cfopEntradaVinculado: '2.201',
-      geraCredito: false,
-      temST: false,
-      observation: 'Devolução de mercadoria comprada para comercialização em outro estado.',
-      informacoesComplementares: 'Devolução de mercadoria interestadual. Referente à NF de compra nº ___, emitida em ___. Simples Nacional — não gera crédito de ICMS.',
       baseLegal: 'LC 123/2006. CSOSN 400.',
       mensagemAlerta: 'Informar número e data da NF original de compra nas informações complementares.',
     },
@@ -301,14 +246,13 @@ async function main() {
       cfopEntradaVinculado: '1.202',
       geraCredito: false,
       temST: false,
-      observation: 'Recebimento em devolução de mercadoria vendida dentro do estado.',
+      observation: 'Recebimento em devolução de mercadoria vendida.',
       informacoesComplementares: 'Devolução de venda. Referente à NF de venda nº ___, emitida em ___. Simples Nacional.',
       baseLegal: 'LC 123/2006. CSOSN 102.',
       mensagemAlerta: 'Informar número e data da NF de venda original nas informações complementares.',
     },
 
     // ─── TRANSFERÊNCIA ────────────────────────────────────────────────────────
-
     {
       originUf: null,
       destinationUf: null,
@@ -324,14 +268,13 @@ async function main() {
       cfopEntradaVinculado: '1.152',
       geraCredito: false,
       temST: false,
-      observation: 'Transferência de mercadoria entre estabelecimentos dentro do estado.',
+      observation: 'Transferência de mercadoria entre estabelecimentos do mesmo titular.',
       informacoesComplementares: 'Transferência de mercadoria entre estabelecimentos do mesmo titular. Simples Nacional — não incide ICMS.',
       baseLegal: 'LC 123/2006. CSOSN 400.',
       mensagemAlerta: null,
     },
 
-    // ─── BRINDE / BONIFICAÇÃO ─────────────────────────────────────────────────
-
+    // ─── REMESSA — BRINDE / BONIFICAÇÃO ──────────────────────────────────────
     {
       originUf: null,
       destinationUf: null,
@@ -373,8 +316,29 @@ async function main() {
       mensagemAlerta: 'Bonificação deve ser informada como saída normal para fins de controle de estoque.',
     },
 
-    // ─── INDUSTRIALIZAÇÃO ─────────────────────────────────────────────────────
+    // ─── REMESSA — EXPORTAÇÃO ─────────────────────────────────────────────────
+    {
+      originUf: null,
+      destinationUf: 'EX',
+      operation: 'remessa',
+      purpose: 'exportacao',
+      taxRegime: 'simples_nacional',
+      cfop: '7.949',
+      cstCsosn: '400',
+      icmsApplicable: false,
+      ipiApplicable: false,
+      priority: 12,
+      naturezaOperacao: 'Remessa para Exportação',
+      cfopEntradaVinculado: null,
+      geraCredito: false,
+      temST: false,
+      observation: 'Remessa de mercadoria para exportação — imune de ICMS e IPI.',
+      informacoesComplementares: 'Remessa para exportação. Operação imune de ICMS e IPI conforme CF/88.',
+      baseLegal: 'CF/88 Art. 155, §2º, X, "a". CF/88 Art. 153, §3º, III.',
+      mensagemAlerta: 'Exportação requer Registro de Exportação (RE) no SISCOMEX.',
+    },
 
+    // ─── INDUSTRIALIZAÇÃO ─────────────────────────────────────────────────────
     {
       originUf: null,
       destinationUf: null,
@@ -390,7 +354,7 @@ async function main() {
       cfopEntradaVinculado: '1.901',
       geraCredito: false,
       temST: false,
-      observation: 'Remessa de insumos para industrialização por encomenda dentro do estado.',
+      observation: 'Remessa de insumos para industrialização por encomenda.',
       informacoesComplementares: 'Remessa para industrialização por encomenda. Não incide ICMS. Prazo para retorno: conforme contrato.',
       baseLegal: 'RICMS/SP — Art. 402. CSOSN 400.',
       mensagemAlerta: 'Emitir NF de retorno do produto industrializado (CFOP 5.902) ao receber o produto acabado.',
@@ -415,29 +379,8 @@ async function main() {
       baseLegal: 'RICMS/SP — Art. 402. CSOSN 400.',
       mensagemAlerta: 'Informar o número da NF de remessa original nas informações complementares.',
     },
-    {
-      originUf: null,
-      destinationUf: null,
-      operation: 'remessa',
-      purpose: 'industrializacao_interestadual',
-      taxRegime: 'simples_nacional',
-      cfop: '6.901',
-      cstCsosn: '400',
-      icmsApplicable: false,
-      ipiApplicable: false,
-      priority: 8,
-      naturezaOperacao: 'Remessa para Industrialização por Encomenda Interestadual',
-      cfopEntradaVinculado: '2.901',
-      geraCredito: false,
-      temST: false,
-      observation: 'Remessa de insumos para industrialização por encomenda em outro estado.',
-      informacoesComplementares: 'Remessa para industrialização por encomenda interestadual. Não incide ICMS. Prazo para retorno: conforme contrato.',
-      baseLegal: 'Convênio ICMS 34/90. CSOSN 400.',
-      mensagemAlerta: 'Emitir NF de retorno do produto industrializado (CFOP 6.902) ao receber o produto acabado.',
-    },
 
-    // ─── DEPÓSITO / GUARDA ────────────────────────────────────────────────────
-
+    // ─── DEPÓSITO ─────────────────────────────────────────────────────────────
     {
       originUf: null,
       destinationUf: null,
@@ -479,31 +422,7 @@ async function main() {
       mensagemAlerta: 'Informar o número da NF de remessa original nas informações complementares.',
     },
 
-    // ─── REMESSA POR CONTA E ORDEM ────────────────────────────────────────────
-
-    {
-      originUf: null,
-      destinationUf: null,
-      operation: 'remessa',
-      purpose: 'conta_ordem',
-      taxRegime: 'simples_nacional',
-      cfop: '5.923',
-      cstCsosn: '102',
-      icmsApplicable: false,
-      ipiApplicable: false,
-      priority: 8,
-      naturezaOperacao: 'Remessa por Conta e Ordem de Terceiros',
-      cfopEntradaVinculado: '1.923',
-      geraCredito: false,
-      temST: false,
-      observation: 'Remessa de mercadoria por conta e ordem de terceiros dentro do estado.',
-      informacoesComplementares: 'Remessa por conta e ordem de terceiros. Simples Nacional. Referente ao pedido/contrato nº ___.',
-      baseLegal: 'LC 123/2006. CSOSN 102.',
-      mensagemAlerta: 'Necessário emissão de NF complementar pelo adquirente original.',
-    },
-
-    // ─── PRESTAÇÃO DE SERVIÇO (MEI SERVIÇO) ──────────────────────────────────
-
+    // ─── PRESTAÇÃO DE SERVIÇO ─────────────────────────────────────────────────
     {
       originUf: null,
       destinationUf: null,
@@ -524,29 +443,6 @@ async function main() {
       baseLegal: 'LC 123/2006 — Art. 23. CSOSN 400.',
       mensagemAlerta: 'MEI prestador de serviço deve verificar se o município exige NFS-e em vez de NF-e.',
     },
-
-    // ─── VENDA COM SUBSTITUIÇÃO TRIBUTÁRIA ───────────────────────────────────
-
-    {
-      originUf: null,
-      destinationUf: null,
-      operation: 'venda',
-      purpose: 'substituicao_tributaria',
-      taxRegime: 'simples_nacional',
-      cfop: '5.405',
-      cstCsosn: '500',
-      icmsApplicable: false,
-      ipiApplicable: false,
-      priority: 10,
-      naturezaOperacao: 'Venda de Mercadoria com ST',
-      cfopEntradaVinculado: '1.405',
-      geraCredito: false,
-      temST: true,
-      observation: 'Venda de mercadoria sujeita à substituição tributária — ICMS já recolhido pelo fabricante.',
-      informacoesComplementares: 'Venda de mercadoria com ICMS retido por substituição tributária. ICMS-ST já recolhido anteriormente na cadeia.',
-      baseLegal: 'LC 123/2006. CSOSN 500 — CRT com ICMS cobrado anteriormente por ST.',
-      mensagemAlerta: 'Atenção: mercadoria com ST. Não destacar ICMS. Informar base de cálculo e valor do ICMS-ST retido.',
-    },
   ];
 
   let criadas = 0;
@@ -555,21 +451,22 @@ async function main() {
   for (const rule of rules) {
     const existing = await prisma.fiscalRule.findFirst({
       where: {
-        cfop: rule.cfop,
         operation: rule.operation,
         purpose: rule.purpose,
         taxRegime: rule.taxRegime,
+        destinationUf: rule.destinationUf ?? null,
+        originUf: rule.originUf ?? null,
       },
     });
 
     if (existing) {
       await prisma.fiscalRule.update({
         where: { id: existing.id },
-        data: rule,
+        data: { ...rule, active: true },
       });
       atualizadas++;
     } else {
-      await prisma.fiscalRule.create({ data: rule });
+      await prisma.fiscalRule.create({ data: { ...rule, active: true } });
       criadas++;
     }
   }
