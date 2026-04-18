@@ -101,7 +101,7 @@ export default function App() {
             onBack={() => { setTab('home'); setFiscalContext(null); }}
           />
         )}
-        {tab === 'history' && <History />}
+        {tab === 'history' && <History user={user} />}
         {tab === 'plans' && <Plans user={user} onSuccess={() => setTab('home')} />}
         {tab === 'company' && (
           <Company
