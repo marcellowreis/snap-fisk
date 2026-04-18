@@ -87,6 +87,8 @@ const PURPOSES: Record<string, { value: string; label: string }[]> = {
     { value: 'consumidor_final_pf', label: 'Para consumidor final' },
     { value: 'substituicao_tributaria', label: 'Com Substituição Tributária' },
     { value: 'exportacao', label: 'Exportação' },
+  ],
+  venda_entrada: [
     { value: 'importacao', label: 'Importação' },
   ],
   remessa: [
@@ -852,7 +854,10 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
             <label className="form-label">Finalidade</label>
             <select className="form-select" value={purpose} onChange={e => setPurpose(e.target.value)}>
               <option value="">Selecione...</option>
-              {(PURPOSES[operation] || []).map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+              {([
+                ...(PURPOSES[operation] || []),
+                ...(tpNF === '0' && operation === 'venda' ? (PURPOSES['venda_entrada'] || []) : []),
+              ]).map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
             </select>
           </div>
         )}
