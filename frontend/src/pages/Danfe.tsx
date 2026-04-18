@@ -10,339 +10,354 @@ export default function Danfe({ invoice, company, onClose }: Props) {
   const frameRef = useRef<HTMLIFrameElement>(null);
 
   const fmt = (v: number) =>
-    v?.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) ?? '0,00';
+    (v ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   const fmtDate = (d: string) =>
-    new Date(d).toLocaleDateString('pt-BR');
+    d ? new Date(d).toLocaleDateString('pt-BR') : '';
 
   const customer = invoice.customer;
   const items = invoice.items ?? [];
   const vTotal = invoice.vTotal ?? 0;
   const vFrete = invoice.vFrete ?? 0;
   const vDesc = invoice.vDesc ?? 0;
+  const vProd = items.reduce((s: number, i: any) => s + (i.vProd ?? 0), 0);
+  const chave = invoice.chaveAcesso ?? '';
+  const chaveFormatada = chave.replace(/(\d{4})/g, '$1 ').trim();
 
-  // Gera o HTML do DANFE simplificado
+  const gerarBarras = (chave: string) => {
+    if (!chave) return '<div style="color:#999;font-size:7pt;padding:2mm 0;">Chave não disponível</div>';
+    let bars = '';
+    for (let i = 0; i < chave.length; i++) {
+      const w = (parseInt(chave[i]) % 3) + 1;
+      const h = i % 5 === 0 ? 12 : 8;
+      bars += `<span style="display:inline-block;width:${w}px;height:${h}mm;background:#000;margin-right:0.5px;vertical-align:bottom;"></span>`;
+    }
+    return `<div style="height:12mm;display:flex;align-items:flex-end;overflow:hidden;">${bars}</div>`;
+  };
+
+  const pagLabel = (tPag: string) => {
+    const m: Record<string, string> = {
+      '01': 'Dinheiro', '03': 'Cartão de Crédito', '04': 'Cartão de Débito',
+      '15': 'Boleto', '17': 'PIX', '90': 'Sem Pagamento',
+    };
+    return m[tPag] ?? 'Sem Pagamento';
+  };
+
+  const freteLabel = (mod: string) => {
+    const m: Record<string, string> = {
+      '0': '0 — Emitente (CIF)', '1': '1 — Destinatário (FOB)',
+      '2': '2 — Terceiros', '9': '9 — Sem Frete',
+    };
+    return m[mod] ?? '9 — Sem Frete';
+  };
+
   const gerarHtml = () => `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8"/>
-<title>DANFE — NF-e nº ${invoice.numero}</title>
+<title>DANFE NF-e nº ${invoice.numero}</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: Arial, sans-serif; font-size: 9px; color: #000; background: #fff; padding: 10mm; }
-  .danfe { width: 190mm; margin: 0 auto; }
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:Arial,Helvetica,sans-serif;font-size:7pt;color:#000;background:#fff;}
+.page{width:210mm;min-height:297mm;margin:0 auto;padding:5mm;}
+.bold{font-weight:bold;}
+.center{text-align:center;}
+.right{text-align:right;}
 
-  /* Cabeçalho */
-  .header { display: grid; grid-template-columns: 1fr 60mm 45mm; border: 1px solid #000; }
-  .header-logo { padding: 6px 8px; border-right: 1px solid #000; }
-  .header-logo .razao { font-size: 11px; font-weight: bold; margin-bottom: 2px; }
-  .header-logo .endereco { font-size: 8px; color: #333; line-height: 1.4; }
-  .header-danfe { border-right: 1px solid #000; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 6px; text-align: center; }
-  .header-danfe .title { font-size: 13px; font-weight: bold; letter-spacing: 2px; }
-  .header-danfe .subtitle { font-size: 8px; margin: 2px 0; }
-  .header-danfe .nf { font-size: 11px; font-weight: bold; margin-top: 4px; }
-  .header-danfe .serie { font-size: 8px; }
-  .header-danfe .homolog { font-size: 7px; color: #c00; border: 1px solid #c00; padding: 2px 4px; margin-top: 4px; }
-  .header-chave { padding: 6px; display: flex; flex-direction: column; justify-content: space-between; }
-  .header-chave .label { font-size: 7px; color: #555; margin-bottom: 2px; }
-  .header-chave .chave { font-size: 7px; word-break: break-all; font-weight: bold; }
-  .header-chave .barcode { font-size: 28px; letter-spacing: -2px; margin: 4px 0; font-family: 'Libre Barcode 128', monospace; }
+/* Canhoto */
+.canhoto{border:0.5pt dashed #000;padding:2mm;margin-bottom:3mm;display:grid;grid-template-columns:1fr 36mm;gap:3mm;align-items:center;}
+.canhoto-left{font-size:6.5pt;line-height:1.6;}
+.canhoto-right{text-align:right;}
 
-  /* Seções */
-  .section { border: 1px solid #000; border-top: none; }
-  .section-title { background: #eee; font-size: 7px; font-weight: bold; padding: 2px 6px; letter-spacing: 1px; border-bottom: 1px solid #000; text-transform: uppercase; }
-  .fields { display: flex; flex-wrap: wrap; }
-  .field { padding: 3px 6px; border-right: 1px solid #ccc; flex: 1; min-width: 40mm; }
-  .field:last-child { border-right: none; }
-  .field .flabel { font-size: 7px; color: #555; }
-  .field .fvalue { font-size: 9px; font-weight: bold; margin-top: 1px; }
+/* Cabeçalho */
+.hdr{display:grid;grid-template-columns:1fr 48mm 46mm;border:0.5pt solid #000;}
+.hdr-emit{padding:2mm;border-right:0.5pt solid #000;}
+.hdr-emit .razao{font-size:9pt;font-weight:bold;margin-bottom:1mm;}
+.hdr-emit .end{font-size:6.5pt;line-height:1.5;}
+.hdr-emit .cnpj{font-size:6.5pt;margin-top:1mm;}
+.hdr-danfe{border-right:0.5pt solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;text-align:center;}
+.hdr-danfe .dt{font-size:14pt;font-weight:bold;letter-spacing:4pt;}
+.hdr-danfe .ds{font-size:6pt;margin:1mm 0;line-height:1.4;}
+.hdr-danfe .tpbox{border:0.5pt solid #000;display:inline-block;padding:0.5mm 3mm;font-size:8pt;font-weight:bold;margin:1mm 0;}
+.hdr-danfe .nnum{font-size:10pt;font-weight:bold;}
+.hdr-danfe .nserie{font-size:7pt;}
+.hdr-danfe .hmg{font-size:5.5pt;color:#c00;border:0.5pt solid #c00;padding:1mm 1.5mm;margin-top:1mm;line-height:1.4;}
+.hdr-chave{padding:2mm;display:flex;flex-direction:column;gap:1.5mm;}
+.lbl{font-size:5.5pt;text-transform:uppercase;color:#444;}
+.val{font-size:7.5pt;font-weight:bold;}
+.val-sm{font-size:6.5pt;font-weight:bold;word-break:break-all;}
 
-  /* Destinatário */
-  .dest-grid { display: grid; grid-template-columns: 1fr 35mm 20mm; }
-  .dest-grid2 { display: grid; grid-template-columns: 1fr 25mm 25mm 20mm; }
-  .dest-grid3 { display: grid; grid-template-columns: 1fr 35mm 20mm 20mm; }
+/* Seções */
+.sec{border:0.5pt solid #000;border-top:none;}
+.sec-title{background:#ccc;font-size:5.5pt;font-weight:bold;text-transform:uppercase;padding:0.8mm 1.5mm;border-bottom:0.5pt solid #000;letter-spacing:0.5pt;}
+.campo{padding:0.8mm 1.5mm;border-right:0.5pt solid #000;}
+.campo:last-child{border-right:none;}
+.row{display:flex;}
+.row .campo{flex:1;}
+.bt{border-top:0.5pt solid #000;}
+.grid2{display:grid;grid-template-columns:1fr 1fr;}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;}
+.grid7{display:grid;grid-template-columns:repeat(7,1fr);}
 
-  /* Itens */
-  table { width: 100%; border-collapse: collapse; font-size: 8px; }
-  thead tr { background: #eee; }
-  th { padding: 3px 4px; text-align: left; font-size: 7px; border: 1px solid #ccc; font-weight: bold; text-transform: uppercase; }
-  td { padding: 3px 4px; border: 1px solid #ddd; vertical-align: top; }
-  tr:nth-child(even) td { background: #fafafa; }
-  .td-right { text-align: right; }
-  .td-center { text-align: center; }
+/* Tabela itens */
+table.itens{width:100%;border-collapse:collapse;font-size:6pt;}
+table.itens thead tr{background:#ccc;}
+table.itens th{border:0.5pt solid #000;padding:0.8mm;text-align:center;font-size:5.5pt;font-weight:bold;text-transform:uppercase;}
+table.itens td{border:0.5pt solid #000;padding:0.8mm;vertical-align:middle;}
+table.itens tr:nth-child(even) td{background:#f8f8f8;}
+.tdr{text-align:right;}
+.tdc{text-align:center;}
 
-  /* Totais */
-  .totais { display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #000; border-top: none; }
-  .totais-left { border-right: 1px solid #000; padding: 6px; }
-  .totais-right { padding: 6px; }
-  .total-row { display: flex; justify-content: space-between; padding: 2px 0; border-bottom: 1px solid #eee; font-size: 8px; }
-  .total-row:last-child { border-bottom: none; }
-  .total-grand { display: flex; justify-content: space-between; padding: 4px 0; font-size: 11px; font-weight: bold; border-top: 1px solid #000; margin-top: 4px; }
+/* Linha fiscal */
+.emit-fiscal{border:0.5pt solid #000;border-top:none;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;}
 
-  /* Pagamento */
-  .pag-section { border: 1px solid #000; border-top: none; }
-
-  /* Rodapé */
-  .footer { margin-top: 4px; font-size: 7px; color: #555; text-align: center; }
-
-  .inline-field { display: inline-block; }
-  .row-fields { display: flex; border-bottom: 1px solid #ccc; }
-  .row-fields:last-child { border-bottom: none; }
-  .row-fields .field { border-bottom: none; }
-
-  @media print {
-    body { padding: 5mm; }
-    button { display: none !important; }
-  }
+@media print{
+  body{margin:0;}
+  .page{padding:3mm;}
+  .no-print{display:none!important;}
+}
 </style>
 </head>
 <body>
-<div class="danfe">
+<div class="page">
 
-  <!-- CABEÇALHO -->
-  <div class="header">
-    <div class="header-logo">
-      <div class="razao">${company?.razaoSocial ?? ''}</div>
-      <div class="endereco">
-        ${[company?.logradouro, company?.numero, company?.bairro].filter(Boolean).join(', ')}<br/>
-        ${[company?.xMun, company?.uf, company?.cep ? 'CEP ' + company.cep : ''].filter(Boolean).join(' — ')}<br/>
-        ${company?.fone ? 'Fone: ' + company.fone : ''} ${company?.email ? '· ' + company.email : ''}
-      </div>
-      <div style="margin-top:6px; font-size:8px; color:#555;">
-        CNPJ: <strong>${company?.cnpj ?? ''}</strong>
-        ${company?.ie ? ' · IE: ' + company.ie : ''}
-      </div>
+<!-- CANHOTO -->
+<div class="canhoto">
+  <div class="canhoto-left">
+    <div class="bold" style="font-size:7.5pt;">${company?.razaoSocial ?? ''}</div>
+    <div>${[company?.logradouro, company?.numero, company?.bairro].filter(Boolean).join(', ')}</div>
+    <div>${company?.xMun ?? ''} — ${company?.uf ?? ''} — ${company?.cep ? 'CEP ' + company.cep : ''}</div>
+    ${company?.fone ? '<div>Fone: ' + company.fone + '</div>' : ''}
+    <div style="margin-top:2mm;border-top:0.5pt dashed #999;padding-top:1.5mm;">
+      RECEBEMOS DE <strong>${company?.razaoSocial ?? ''}</strong> OS PRODUTOS E/OU SERVIÇOS CONSTANTES NA NOTA FISCAL INDICADA AO LADO
     </div>
-    <div class="header-danfe">
-      <div class="title">DANFE</div>
-      <div class="subtitle">Documento Auxiliar da<br/>Nota Fiscal Eletrônica</div>
-      <div style="margin:4px 0;font-size:8px;">
-        <span style="border:1px solid #000;padding:1px 6px;">${invoice.tpNF === '1' ? '1 - SAÍDA' : '0 - ENTRADA'}</span>
-      </div>
-      <div class="nf">Nº ${String(invoice.numero).padStart(9, '0')}</div>
-      <div class="serie">Série ${invoice.serie ?? '0'}</div>
-      ${invoice.ambiente === '2' ? '<div class="homolog">HOMOLOGAÇÃO — SEM VALOR FISCAL</div>' : ''}
+    <div style="margin-top:2mm;">
+      DATA DE RECEBIMENTO: ____/____/________ &nbsp;&nbsp; ASSINATURA DO RECEBEDOR: _________________________________
     </div>
-    <div class="header-chave">
+  </div>
+  <div class="canhoto-right">
+    <div style="font-size:5.5pt;text-transform:uppercase;font-weight:bold;">NF-e</div>
+    <div style="font-size:13pt;font-weight:bold;">Nº ${String(invoice.numero).padStart(6,'0')}</div>
+    <div style="font-size:7pt;">Série ${invoice.serie ?? '0'}</div>
+  </div>
+</div>
+
+<!-- CABEÇALHO PRINCIPAL -->
+<div class="hdr">
+  <div class="hdr-emit">
+    <div class="razao">${company?.razaoSocial ?? ''}</div>
+    <div class="end">
+      ${[company?.logradouro, company?.numero].filter(Boolean).join(', ')}<br/>
+      ${company?.bairro ?? ''} — ${company?.xMun ?? ''} — ${company?.uf ?? ''}<br/>
+      ${company?.cep ? 'CEP: ' + company.cep : ''}
+      ${company?.fone ? ' &nbsp; Fone: ' + company.fone : ''}
+    </div>
+    <div class="cnpj">
+      <span class="lbl">CNPJ: </span><strong>${company?.cnpj ?? ''}</strong>
+      ${company?.ie ? ' &nbsp; <span class="lbl">IE: </span><strong>' + company.ie + '</strong>' : ''}
+    </div>
+  </div>
+
+  <div class="hdr-danfe">
+    <div class="dt">DANFE</div>
+    <div class="ds">Documento Auxiliar da<br/>Nota Fiscal Eletrônica</div>
+    <div style="display:flex;gap:3mm;align-items:center;justify-content:center;margin:1mm 0;">
+      <div style="font-size:5.5pt;text-align:left;line-height:1.6;">0 — ENTRADA<br/>1 — SAÍDA</div>
+      <div class="tpbox">${invoice.tpNF ?? '1'}</div>
+    </div>
+    <div class="nnum">Nº ${String(invoice.numero).padStart(9,'0')}</div>
+    <div class="nserie">SÉRIE: ${invoice.serie ?? '0'}</div>
+    <div style="font-size:5.5pt;margin-top:0.5mm;">PÁGINA 1 DE 1</div>
+    ${invoice.ambiente === '2' ? '<div class="hmg">HOMOLOGAÇÃO — SEM VALOR FISCAL</div>' : ''}
+  </div>
+
+  <div class="hdr-chave">
+    <div>
+      <div class="lbl">Chave de Acesso</div>
+      ${gerarBarras(chave)}
+      <div style="font-size:6pt;font-weight:bold;word-break:break-all;letter-spacing:0.5pt;margin-top:0.5mm;">${chaveFormatada || '— não disponível —'}</div>
+      <div style="font-size:5pt;color:#555;margin-top:0.5mm;">Consulta em www.nfe.fazenda.gov.br/portal</div>
+    </div>
+    <div>
+      <div class="lbl">Natureza da Operação</div>
+      <div style="font-size:8pt;font-weight:bold;">${invoice.natOp ?? ''}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5mm;">
       <div>
-        <div class="label">Chave de Acesso</div>
-        <div class="chave">${invoice.chaveAcesso ?? '— não disponível —'}</div>
+        <div class="lbl">Protocolo de Autorização</div>
+        <div style="font-size:6.5pt;font-weight:bold;">${invoice.protocolo ?? '—'}</div>
       </div>
-      <div style="margin-top:6px;">
-        <div class="label">Natureza da Operação</div>
-        <div style="font-size:9px;font-weight:bold;">${invoice.natOp ?? ''}</div>
-      </div>
-      <div style="margin-top:6px;">
-        <div class="label">Data de Emissão</div>
-        <div style="font-size:9px;font-weight:bold;">${fmtDate(invoice.dhEmi ?? invoice.createdAt)}</div>
+      <div>
+        <div class="lbl">Data de Emissão</div>
+        <div style="font-size:7pt;font-weight:bold;">${fmtDate(invoice.dhEmi ?? invoice.createdAt)}</div>
       </div>
     </div>
   </div>
+</div>
 
-  <!-- EMITENTE -->
-  <div class="section">
-    <div class="section-title">Emitente</div>
-    <div class="row-fields">
-      <div class="field" style="flex:2">
-        <div class="flabel">Razão Social</div>
-        <div class="fvalue">${company?.razaoSocial ?? ''}</div>
-      </div>
-      <div class="field">
-        <div class="flabel">CNPJ</div>
-        <div class="fvalue">${company?.cnpj ?? ''}</div>
-      </div>
-      <div class="field">
-        <div class="flabel">IE</div>
-        <div class="fvalue">${company?.ie ?? 'ISENTO'}</div>
-      </div>
-      <div class="field">
-        <div class="flabel">CRT</div>
-        <div class="fvalue">4 — MEI</div>
+<!-- DADOS FISCAIS DO EMITENTE -->
+<div class="emit-fiscal">
+  <div class="campo"><div class="lbl">Inscrição Estadual</div><div class="val-sm">${company?.ie ?? 'ISENTO'}</div></div>
+  <div class="campo"><div class="lbl">Inscrição Estadual Subst. Trib.</div><div class="val-sm">—</div></div>
+  <div class="campo"><div class="lbl">CNPJ</div><div class="val-sm">${company?.cnpj ?? ''}</div></div>
+  <div class="campo" style="border-right:none;"><div class="lbl">CRT</div><div class="val-sm">4 — Simples Nacional / MEI</div></div>
+</div>
+
+<!-- DESTINATÁRIO -->
+<div class="sec">
+  <div class="sec-title">Destinatário / Remetente</div>
+  <div style="display:grid;grid-template-columns:2fr 1fr 1fr;">
+    <div class="campo"><div class="lbl">Nome / Razão Social</div><div class="val-sm">${customer?.nome ?? 'NÃO IDENTIFICADO'}</div></div>
+    <div class="campo"><div class="lbl">CNPJ / CPF</div><div class="val-sm">${customer?.cpfCnpj ?? '—'}</div></div>
+    <div class="campo" style="border-right:none;"><div class="lbl">Data de Emissão</div><div class="val-sm">${fmtDate(invoice.dhEmi ?? invoice.createdAt)}</div></div>
+  </div>
+  <div class="bt" style="display:grid;grid-template-columns:2fr 1fr 0.6fr 0.4fr 1fr;">
+    <div class="campo"><div class="lbl">Endereço</div><div class="val-sm">${customer?.logradouro ?? '—'}${customer?.numero ? ', ' + customer.numero : ''}</div></div>
+    <div class="campo"><div class="lbl">Bairro / Distrito</div><div class="val-sm">${customer?.bairro ?? '—'}</div></div>
+    <div class="campo"><div class="lbl">CEP</div><div class="val-sm">${customer?.cep ?? '—'}</div></div>
+    <div class="campo"><div class="lbl">UF</div><div class="val-sm">${customer?.uf ?? '—'}</div></div>
+    <div class="campo" style="border-right:none;"><div class="lbl">Município</div><div class="val-sm">${customer?.xMun ?? '—'}</div></div>
+  </div>
+  <div class="bt" style="display:grid;grid-template-columns:1fr 1fr 2fr 1fr;">
+    <div class="campo"><div class="lbl">Fone / Fax</div><div class="val-sm">${customer?.fone ?? '—'}</div></div>
+    <div class="campo"><div class="lbl">Inscrição Estadual</div><div class="val-sm">${customer?.ie ?? '—'}</div></div>
+    <div class="campo"><div class="lbl">E-mail</div><div class="val-sm">${customer?.email ?? '—'}</div></div>
+    <div class="campo" style="border-right:none;"><div class="lbl">Ind. IE Dest.</div><div class="val-sm">${customer?.indIEDest === '1' ? '1 — Contribuinte' : customer?.indIEDest === '2' ? '2 — Isento' : '9 — Não contribuinte'}</div></div>
+  </div>
+</div>
+
+<!-- FATURA -->
+<div class="sec">
+  <div class="sec-title">Fatura</div>
+  <div class="grid4">
+    <div class="campo"><div class="lbl">Número / Duplicata</div><div class="val-sm">—</div></div>
+    <div class="campo"><div class="lbl">Vencimento</div><div class="val-sm">—</div></div>
+    <div class="campo"><div class="lbl">Forma de Pagamento</div><div class="val-sm">${pagLabel(invoice.tPag)}</div></div>
+    <div class="campo" style="border-right:none;"><div class="lbl">Valor Pago</div><div class="val-sm">R$ ${fmt(invoice.vPag ?? 0)}</div></div>
+  </div>
+</div>
+
+<!-- CÁLCULO DO IMPOSTO -->
+<div class="sec">
+  <div class="sec-title">Cálculo do Imposto</div>
+  <div class="grid7">
+    <div class="campo"><div class="lbl">Base Cálc. ICMS</div><div class="val-sm">0,00</div></div>
+    <div class="campo"><div class="lbl">Valor do ICMS</div><div class="val-sm">0,00</div></div>
+    <div class="campo"><div class="lbl">Base Cálc. ICMS ST</div><div class="val-sm">0,00</div></div>
+    <div class="campo"><div class="lbl">Valor ICMS ST</div><div class="val-sm">0,00</div></div>
+    <div class="campo"><div class="lbl">V. Imp. Importação</div><div class="val-sm">0,00</div></div>
+    <div class="campo"><div class="lbl">V. ICMS UF Remet.</div><div class="val-sm">0,00</div></div>
+    <div class="campo" style="border-right:none;"><div class="lbl">Valor do FCP</div><div class="val-sm">0,00</div></div>
+  </div>
+  <div class="bt grid7">
+    <div class="campo"><div class="lbl">Valor do Frete</div><div class="val-sm">R$ ${fmt(vFrete)}</div></div>
+    <div class="campo"><div class="lbl">Valor do Seguro</div><div class="val-sm">0,00</div></div>
+    <div class="campo"><div class="lbl">Desconto</div><div class="val-sm">R$ ${fmt(vDesc)}</div></div>
+    <div class="campo"><div class="lbl">Outras Despesas</div><div class="val-sm">0,00</div></div>
+    <div class="campo"><div class="lbl">Valor do IPI</div><div class="val-sm">0,00</div></div>
+    <div class="campo"><div class="lbl">V. Aprox. Tributos</div><div class="val-sm">0,00</div></div>
+    <div class="campo" style="border-right:none;"><div class="lbl" style="font-weight:bold;">V. Total da Nota</div><div style="font-size:9pt;font-weight:bold;">R$ ${fmt(vTotal)}</div></div>
+  </div>
+</div>
+
+<!-- TRANSPORTADOR -->
+<div class="sec">
+  <div class="sec-title">Transportador / Volumes Transportados</div>
+  <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 0.5fr 1fr;">
+    <div class="campo"><div class="lbl">Razão Social</div><div class="val-sm">—</div></div>
+    <div class="campo"><div class="lbl">Frete por Conta</div><div class="val-sm">${freteLabel(invoice.modFrete)}</div></div>
+    <div class="campo"><div class="lbl">Código ANTT</div><div class="val-sm">—</div></div>
+    <div class="campo"><div class="lbl">Placa do Veículo</div><div class="val-sm">—</div></div>
+    <div class="campo"><div class="lbl">UF</div><div class="val-sm">—</div></div>
+    <div class="campo" style="border-right:none;"><div class="lbl">CNPJ / CPF</div><div class="val-sm">—</div></div>
+  </div>
+  <div class="bt" style="display:grid;grid-template-columns:2fr 1fr 0.5fr 1fr 1fr 1fr;">
+    <div class="campo"><div class="lbl">Endereço</div><div class="val-sm">—</div></div>
+    <div class="campo"><div class="lbl">Município</div><div class="val-sm">—</div></div>
+    <div class="campo"><div class="lbl">UF</div><div class="val-sm">—</div></div>
+    <div class="campo"><div class="lbl">Insc. Estadual</div><div class="val-sm">—</div></div>
+    <div class="campo"><div class="lbl">Quantidade / Espécie</div><div class="val-sm">—</div></div>
+    <div class="campo" style="border-right:none;"><div class="lbl">Peso Bruto / Líquido</div><div class="val-sm">—</div></div>
+  </div>
+</div>
+
+<!-- DADOS DOS PRODUTOS -->
+<div class="sec">
+  <div class="sec-title">Dados dos Produtos / Serviços</div>
+  <table class="itens">
+    <thead>
+      <tr>
+        <th style="width:12mm;">Código</th>
+        <th>Descrição do Produto / Serviço</th>
+        <th style="width:15mm;">NCM/SH</th>
+        <th style="width:9mm;">CST</th>
+        <th style="width:9mm;">CFOP</th>
+        <th style="width:7mm;">UN</th>
+        <th style="width:11mm;">Qtd.</th>
+        <th style="width:15mm;">Vl. Unit.</th>
+        <th style="width:15mm;">Vl. Total</th>
+        <th style="width:11mm;">BC ICMS</th>
+        <th style="width:11mm;">Vl. ICMS</th>
+        <th style="width:9mm;">Vl. IPI</th>
+        <th style="width:9mm;">Al. ICMS</th>
+        <th style="width:9mm;">Al. IPI</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${items.map((item: any, idx: number) => `
+      <tr>
+        <td class="tdc">${item.cProd ?? String(idx + 1).padStart(4, '0')}</td>
+        <td>${item.xProd ?? ''}</td>
+        <td class="tdc">${item.ncm ?? ''}</td>
+        <td class="tdc">${item.csosn ?? '102'}</td>
+        <td class="tdc">${item.cfop ?? ''}</td>
+        <td class="tdc">${item.uCom ?? 'PC'}</td>
+        <td class="tdr">${Number(item.qCom ?? 0).toLocaleString('pt-BR', { minimumFractionDigits: 3 })}</td>
+        <td class="tdr">${fmt(item.vUnCom ?? 0)}</td>
+        <td class="tdr">${fmt(item.vProd ?? 0)}</td>
+        <td class="tdr">0,00</td>
+        <td class="tdr">0,00</td>
+        <td class="tdr">0,00</td>
+        <td class="tdr">0,00</td>
+        <td class="tdr">0,00</td>
+      </tr>`).join('')}
+    </tbody>
+  </table>
+</div>
+
+<!-- ISSQN -->
+<div class="sec">
+  <div class="sec-title">Cálculo do ISSQN</div>
+  <div class="grid4">
+    <div class="campo"><div class="lbl">Inscrição Municipal</div><div class="val-sm">${company?.im ?? '—'}</div></div>
+    <div class="campo"><div class="lbl">Valor Total dos Serviços</div><div class="val-sm">R$ 0,00</div></div>
+    <div class="campo"><div class="lbl">Base de Cálculo do ISSQN</div><div class="val-sm">R$ 0,00</div></div>
+    <div class="campo" style="border-right:none;"><div class="lbl">Valor do ISSQN</div><div class="val-sm">R$ 0,00</div></div>
+  </div>
+</div>
+
+<!-- DADOS ADICIONAIS -->
+<div class="sec">
+  <div class="sec-title">Dados Adicionais</div>
+  <div class="grid2">
+    <div class="campo" style="min-height:18mm;border-right:0.5pt solid #000;">
+      <div class="lbl">Informações Complementares</div>
+      <div class="val-sm" style="line-height:1.6;margin-top:1mm;">
+        ${invoice.infCpl ? invoice.infCpl + '<br/>' : ''}
+        DOCUMENTO EMITIDO POR ME OU EPP OPTANTE PELO SIMPLES NACIONAL. NÃO GERA DIREITO A CRÉDITO FISCAL DE ICMS, ISS E IPI.
+        ${invoice.ambiente === '2' ? '<br/><span style="color:#c00;font-weight:bold;">NOTA EMITIDA EM AMBIENTE DE HOMOLOGAÇÃO — SEM VALOR FISCAL.</span>' : ''}
       </div>
     </div>
-    <div class="row-fields">
-      <div class="field" style="flex:2">
-        <div class="flabel">Logradouro</div>
-        <div class="fvalue">${company?.logradouro ?? ''}, ${company?.numero ?? 'SN'}</div>
-      </div>
-      <div class="field">
-        <div class="flabel">Bairro</div>
-        <div class="fvalue">${company?.bairro ?? ''}</div>
-      </div>
-      <div class="field">
-        <div class="flabel">Município</div>
-        <div class="fvalue">${company?.xMun ?? ''}</div>
-      </div>
-      <div class="field">
-        <div class="flabel">UF</div>
-        <div class="fvalue">${company?.uf ?? ''}</div>
-      </div>
-      <div class="field">
-        <div class="flabel">CEP</div>
-        <div class="fvalue">${company?.cep ?? ''}</div>
-      </div>
+    <div class="campo" style="min-height:18mm;border-right:none;">
+      <div class="lbl">Reserva ao Fisco</div>
     </div>
   </div>
+</div>
 
-  <!-- DESTINATÁRIO -->
-  <div class="section">
-    <div class="section-title">Destinatário / Remetente</div>
-    ${customer ? `
-    <div class="row-fields">
-      <div class="field" style="flex:2">
-        <div class="flabel">Nome / Razão Social</div>
-        <div class="fvalue">${customer.nome}</div>
-      </div>
-      <div class="field">
-        <div class="flabel">CPF / CNPJ</div>
-        <div class="fvalue">${customer.cpfCnpj}</div>
-      </div>
-      <div class="field">
-        <div class="flabel">IE</div>
-        <div class="fvalue">${customer.ie ?? '—'}</div>
-      </div>
-    </div>
-    <div class="row-fields">
-      <div class="field" style="flex:2">
-        <div class="flabel">Logradouro</div>
-        <div class="fvalue">${customer.logradouro ?? '—'}, ${customer.numero ?? 'SN'}</div>
-      </div>
-      <div class="field">
-        <div class="flabel">Bairro</div>
-        <div class="fvalue">${customer.bairro ?? '—'}</div>
-      </div>
-      <div class="field">
-        <div class="flabel">Município</div>
-        <div class="fvalue">${customer.xMun ?? '—'}</div>
-      </div>
-      <div class="field">
-        <div class="flabel">UF</div>
-        <div class="fvalue">${customer.uf ?? '—'}</div>
-      </div>
-      <div class="field">
-        <div class="flabel">CEP</div>
-        <div class="fvalue">${customer.cep ?? '—'}</div>
-      </div>
-    </div>
-    ${customer.email || customer.fone ? `
-    <div class="row-fields">
-      ${customer.email ? `<div class="field"><div class="flabel">E-mail</div><div class="fvalue">${customer.email}</div></div>` : ''}
-      ${customer.fone ? `<div class="field"><div class="flabel">Fone</div><div class="fvalue">${customer.fone}</div></div>` : ''}
-    </div>` : ''}
-    ` : `<div style="padding:8px 6px;font-size:9px;color:#555;">Sem destinatário informado</div>`}
-  </div>
-
-  <!-- ITENS -->
-  <div class="section">
-    <div class="section-title">Dados dos Produtos / Serviços</div>
-    <table>
-      <thead>
-        <tr>
-          <th style="width:8mm">Cód.</th>
-          <th style="width:50mm">Descrição</th>
-          <th style="width:18mm">NCM</th>
-          <th style="width:10mm">CFOP</th>
-          <th style="width:8mm">Un.</th>
-          <th style="width:12mm" class="td-right">Qtd.</th>
-          <th style="width:18mm" class="td-right">Vl. Unit.</th>
-          <th style="width:18mm" class="td-right">Vl. Total</th>
-          <th style="width:10mm" class="td-center">CSOSN</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${items.map((item: any, idx: number) => `
-        <tr>
-          <td class="td-center">${item.cProd ?? String(idx + 1).padStart(4, '0')}</td>
-          <td>${item.xProd}</td>
-          <td class="td-center">${item.ncm}</td>
-          <td class="td-center">${item.cfop}</td>
-          <td class="td-center">${item.uCom}</td>
-          <td class="td-right">${Number(item.qCom).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
-          <td class="td-right">R$ ${fmt(item.vUnCom)}</td>
-          <td class="td-right">R$ ${fmt(item.vProd)}</td>
-          <td class="td-center">${item.csosn}</td>
-        </tr>`).join('')}
-      </tbody>
-    </table>
-  </div>
-
-  <!-- TOTAIS -->
-  <div class="totais">
-    <div class="totais-left">
-      <div style="font-size:7px;font-weight:bold;text-transform:uppercase;margin-bottom:4px;color:#555;">Cálculo do Imposto</div>
-      <div class="total-row"><span>Base Cálculo ICMS</span><span>R$ 0,00</span></div>
-      <div class="total-row"><span>Valor do ICMS</span><span>R$ 0,00</span></div>
-      <div class="total-row"><span>Base Cálculo ICMS ST</span><span>R$ 0,00</span></div>
-      <div class="total-row"><span>Valor ICMS ST</span><span>R$ 0,00</span></div>
-      <div class="total-row"><span>Valor IPI</span><span>R$ 0,00</span></div>
-      <div class="total-row"><span>Valor PIS</span><span>R$ 0,00</span></div>
-      <div class="total-row"><span>Valor COFINS</span><span>R$ 0,00</span></div>
-    </div>
-    <div class="totais-right">
-      <div style="font-size:7px;font-weight:bold;text-transform:uppercase;margin-bottom:4px;color:#555;">Totais da NF-e</div>
-      <div class="total-row"><span>Total dos Produtos</span><span>R$ ${fmt(items.reduce((s: number, i: any) => s + (i.vProd ?? 0), 0))}</span></div>
-      <div class="total-row"><span>Frete</span><span>R$ ${fmt(vFrete)}</span></div>
-      <div class="total-row"><span>Desconto</span><span>R$ ${fmt(vDesc)}</span></div>
-      <div class="total-row"><span>Outras Despesas</span><span>R$ 0,00</span></div>
-      <div class="total-grand"><span>VALOR TOTAL DA NF-e</span><span>R$ ${fmt(vTotal)}</span></div>
-    </div>
-  </div>
-
-  <!-- TRANSPORTE -->
-  <div class="section">
-    <div class="section-title">Transporte / Volumes Transportados</div>
-    <div class="row-fields">
-      <div class="field" style="flex:2">
-        <div class="flabel">Modalidade do Frete</div>
-        <div class="fvalue">${
-          invoice.modFrete === '0' ? '0 — Por conta do emitente'
-          : invoice.modFrete === '1' ? '1 — Por conta do destinatário'
-          : '9 — Sem frete'
-        }</div>
-      </div>
-      <div class="field">
-        <div class="flabel">Valor do Frete</div>
-        <div class="fvalue">R$ ${fmt(vFrete)}</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- PAGAMENTO -->
-  <div class="section">
-    <div class="section-title">Pagamento</div>
-    <div class="row-fields">
-      <div class="field">
-        <div class="flabel">Forma de Pagamento</div>
-        <div class="fvalue">${
-          invoice.tPag === '01' ? 'Dinheiro'
-          : invoice.tPag === '03' ? 'Cartão de Crédito'
-          : invoice.tPag === '04' ? 'Cartão de Débito'
-          : invoice.tPag === '15' ? 'Boleto'
-          : invoice.tPag === '17' ? 'PIX'
-          : 'Sem Pagamento'
-        }</div>
-      </div>
-      <div class="field">
-        <div class="flabel">Valor</div>
-        <div class="fvalue">R$ ${fmt(invoice.vPag ?? 0)}</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- INFORMAÇÕES ADICIONAIS -->
-  ${invoice.infCpl ? `
-  <div class="section">
-    <div class="section-title">Informações Complementares</div>
-    <div style="padding:6px 8px;font-size:8px;line-height:1.5;">${invoice.infCpl}</div>
-  </div>` : ''}
-
-  <!-- RODAPÉ -->
-  <div class="footer" style="margin-top:8px;">
-    ${invoice.ambiente === '2'
-      ? '<strong style="color:#c00;">⚠ NOTA EMITIDA EM AMBIENTE DE HOMOLOGAÇÃO — SEM VALOR FISCAL</strong><br/>'
-      : ''}
-    Emitido por Snap Fisk · ${fmtDate(invoice.createdAt)} · NF-e nº ${invoice.numero} Série ${invoice.serie}
-  </div>
+<div style="text-align:center;font-size:5.5pt;color:#666;margin-top:2mm;">
+  Emitido por Snap Fisk &nbsp;·&nbsp; ${fmtDate(invoice.createdAt)} &nbsp;·&nbsp; NF-e nº ${invoice.numero} Série ${invoice.serie ?? '0'}
+</div>
 
 </div>
 </body>
@@ -365,10 +380,9 @@ export default function Danfe({ invoice, company, onClose }: Props) {
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', zIndex: 1000, display: 'flex', flexDirection: 'column' }}>
-      {/* Toolbar */}
-      <div style={{ background: '#1a1a2e', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333' }}>
+      <div style={{ background: '#1a1a2e', padding: '10px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #333', flexShrink: 0 }}>
         <div style={{ color: '#fff', fontWeight: 700, fontSize: 14 }}>
-          📄 DANFE — NF-e nº {String(invoice.numero).padStart(9, '0')}
+          📄 DANFE — NF-e nº {String(invoice.numero).padStart(9, '0')} · Série {invoice.serie ?? '0'}
         </div>
         <div style={{ display: 'flex', gap: 8 }}>
           <button
@@ -385,19 +399,10 @@ export default function Danfe({ invoice, company, onClose }: Props) {
           </button>
         </div>
       </div>
-
-      {/* Preview */}
-      <div style={{ flex: 1, overflow: 'auto', padding: '16px', display: 'flex', justifyContent: 'center' }}>
+      <div style={{ flex: 1, overflow: 'auto', padding: '16px', display: 'flex', justifyContent: 'center', background: '#2a2a2a' }}>
         <iframe
           ref={frameRef}
-          style={{
-            width: '210mm',
-            minHeight: '297mm',
-            background: '#fff',
-            border: 'none',
-            borderRadius: 4,
-            boxShadow: '0 4px 32px rgba(0,0,0,0.5)',
-          }}
+          style={{ width: '215mm', minHeight: '297mm', background: '#fff', border: 'none', borderRadius: 4, boxShadow: '0 4px 32px rgba(0,0,0,0.6)' }}
           title="DANFE"
         />
       </div>
