@@ -1,11 +1,17 @@
 import { useState, useEffect } from 'react';
 import { api } from '../api';
+import Danfe from './Danfe';
 
-export default function History() {
+type Props = {
+  user: any;
+};
+
+export default function History({ user }: Props) {
   const [tab, setTab] = useState<'nfe' | 'consultas'>('nfe');
   const [invoices, setInvoices] = useState<any[]>([]);
   const [consultas, setConsultas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [danfeInvoice, setDanfeInvoice] = useState<any>(null);
 
   useEffect(() => {
     Promise.all([
@@ -43,6 +49,15 @@ export default function History() {
 
   return (
     <div>
+      {/* Visualizador DANFE */}
+      {danfeInvoice && (
+        <Danfe
+          invoice={danfeInvoice}
+          company={user?.company}
+          onClose={() => setDanfeInvoice(null)}
+        />
+      )}
+
       <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
         {[{ v: 'nfe', l: '📄 NF-e Emitidas' }, { v: 'consultas', l: '🔍 Consultas' }].map(t => (
           <button key={t.v} className={`btn ${tab === t.v ? 'btn-primary' : 'btn-outline'}`} style={{ flex: 1 }} onClick={() => setTab(t.v as any)}>
@@ -70,14 +85,22 @@ export default function History() {
                 <div className="history-date">{fmt(inv.createdAt)}</div>
               </div>
             </div>
+
             <div className="history-info">
               {inv.customer ? inv.customer.nome : 'Sem destinatário'} · {inv.tpNF === '1' ? 'Saída' : 'Entrada'}
             </div>
+
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
               <div style={{ fontSize: 16, fontWeight: 700, color: 'var(--primary-light)' }}>
                 R$ {inv.vTotal?.toFixed(2).replace('.', ',')}
               </div>
-              <div style={{ display: 'flex', gap: 8 }}>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setDanfeInvoice(inv)}
+                >
+                  📋 DANFE
+                </button>
                 {inv.xmlGerado && (
                   <button className="btn btn-outline btn-sm" onClick={() => downloadXml(inv.id, inv.numero)}>
                     📥 XML
@@ -85,6 +108,7 @@ export default function History() {
                 )}
               </div>
             </div>
+
             {inv.items?.length > 0 && (
               <div style={{ marginTop: 8, fontSize: 12, color: 'var(--text-muted)' }}>
                 {inv.items.length} item(s): {inv.items.map((i: any) => i.xProd).join(', ')}
