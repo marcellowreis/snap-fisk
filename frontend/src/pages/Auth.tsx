@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { api } from '../api';
 import type { User } from '../App';
 
@@ -6,14 +6,26 @@ type Props = {
   onLogin: (token: string, user: User) => void;
 };
 
+const CNPJ_KEY = 'snapfisk_cnpj';
+
 export default function Auth({ onLogin }: Props) {
   const [mode, setMode] = useState<'login' | 'register'>('login');
   const [cnpj, setCnpj] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberCnpj, setRememberCnpj] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Carrega CNPJ salvo ao abrir a tela
+  useEffect(() => {
+    const saved = localStorage.getItem(CNPJ_KEY);
+    if (saved) {
+      setCnpj(saved);
+      setRememberCnpj(true);
+    }
+  }, []);
 
   const formatCnpj = (v: string) =>
     v.replace(/\D/g, '').slice(0, 14)
@@ -31,6 +43,14 @@ export default function Auth({ onLogin }: Props) {
         ? { cnpj, password }
         : { cnpj, email, password };
       const data = await api.post(path, body);
+
+      // Salva ou remove CNPJ conforme checkbox
+      if (rememberCnpj) {
+        localStorage.setItem(CNPJ_KEY, formatCnpj(cnpj));
+      } else {
+        localStorage.removeItem(CNPJ_KEY);
+      }
+
       onLogin(data.token, data.user);
     } catch (e: any) {
       setError(e.message);
@@ -108,6 +128,18 @@ export default function Auth({ onLogin }: Props) {
             </button>
           </div>
         </div>
+
+        {/* Lembrar CNPJ */}
+        {mode === 'login' && (
+          <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', marginBottom: 16, color: 'var(--text-muted)' }}>
+            <input
+              type="checkbox"
+              checked={rememberCnpj}
+              onChange={e => setRememberCnpj(e.target.checked)}
+            />
+            Lembrar CNPJ neste dispositivo
+          </label>
+        )}
 
         <button
           className="btn btn-primary"
