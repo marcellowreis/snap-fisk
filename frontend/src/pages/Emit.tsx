@@ -222,6 +222,21 @@ export default function Emit({ user, fiscalContext, onBack }: Props) {
   const [vFrete, setVFrete] = useState(0);
   const [vDesc, setVDesc] = useState(0);
 
+  // ─── TRANSPORTADOR ──────────────────────────────────────────────────────────
+  const [transpNome, setTranspNome] = useState('');
+  const [transpCnpj, setTranspCnpj] = useState('');
+  const [transpIe, setTranspIe] = useState('');
+  const [transpCep, setTranspCep] = useState('');
+  const [transpEndereco, setTranspEndereco] = useState('');
+  const [transpPlaca, setTranspPlaca] = useState('');
+  const [transpUfVeiculo, setTranspUfVeiculo] = useState('');
+  const [transpQtd, setTranspQtd] = useState('');
+  const [transpEspecie, setTranspEspecie] = useState('');
+  const [transpMarca, setTranspMarca] = useState('');
+  const [transpNumeracao, setTranspNumeracao] = useState('');
+  const [transpPesoBruto, setTranspPesoBruto] = useState('');
+  const [transpPesoLiquido, setTranspPesoLiquido] = useState('');
+
   const [tPag, setTPag] = useState('90');
   const [vPag, setVPag] = useState(0);
 
@@ -478,6 +493,21 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
         modFrete,
         tPag,
         vPag,
+        transp: {
+          razaoSocial: transpNome || undefined,
+          cnpjCpf: transpCnpj || undefined,
+          ie: transpIe || undefined,
+          cep: transpCep || undefined,
+          endereco: transpEndereco || undefined,
+          placa: transpPlaca || undefined,
+          ufVeiculo: transpUfVeiculo || undefined,
+          quantidade: transpQtd || undefined,
+          especie: transpEspecie || undefined,
+          marca: transpMarca || undefined,
+          numeracao: transpNumeracao || undefined,
+          pesoBruto: transpPesoBruto || undefined,
+          pesoLiquido: transpPesoLiquido || undefined,
+        },
         items: items.map(i => ({
           productId: i.productId,
           cProd: i.cProd,
@@ -525,6 +555,21 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
       tPag,
       vPag,
       infCpl: fiscalResult?.informacoesComplementares || '',
+      transp: {
+        razaoSocial: transpNome || undefined,
+        cnpjCpf: transpCnpj || undefined,
+        ie: transpIe || undefined,
+        cep: transpCep || undefined,
+        endereco: transpEndereco || undefined,
+        placa: transpPlaca || undefined,
+        ufVeiculo: transpUfVeiculo || undefined,
+        quantidade: transpQtd || undefined,
+        especie: transpEspecie || undefined,
+        marca: transpMarca || undefined,
+        numeracao: transpNumeracao || undefined,
+        pesoBruto: transpPesoBruto || undefined,
+        pesoLiquido: transpPesoLiquido || undefined,
+      },
     };
 
     return (
@@ -593,6 +638,19 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
             setVFrete(0);
             setVDesc(0);
             setModFrete('9');
+            setTranspNome('');
+            setTranspCnpj('');
+            setTranspIe('');
+            setTranspCep('');
+            setTranspEndereco('');
+            setTranspPlaca('');
+            setTranspUfVeiculo('');
+            setTranspQtd('');
+            setTranspEspecie('');
+            setTranspMarca('');
+            setTranspNumeracao('');
+            setTranspPesoBruto('');
+            setTranspPesoLiquido('');
           }}>
             + Nova NF-e
           </button>
@@ -1047,6 +1105,81 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
           <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
             <span style={{ fontWeight: 700 }}>Total da NF</span>
             <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary-light)' }}>R$ {vTotal.toFixed(2).replace('.', ',')}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* TRANSPORTADOR */}
+      <div className="card">
+        <div className="card-title">Transportador / Volumes Transportados</div>
+
+        <div className="form-group">
+          <label className="form-label">Nome do Transportador <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>(opcional)</span></label>
+          <input className="form-input" placeholder="Razão social da transportadora..." value={transpNome} onChange={e => setTranspNome(e.target.value)} />
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div className="form-group">
+            <label className="form-label">CNPJ / CPF</label>
+            <input className="form-input" placeholder="00.000.000/0000-00" value={transpCnpj} onChange={e => setTranspCnpj(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Inscrição Estadual</label>
+            <input className="form-input" placeholder="IE ou ISENTO" value={transpIe} onChange={e => setTranspIe(e.target.value)} />
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr', gap: 8 }}>
+          <div className="form-group">
+            <label className="form-label">CEP</label>
+            <input className="form-input" placeholder="00000-000" value={transpCep} onChange={e => setTranspCep(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Endereço</label>
+            <input className="form-input" placeholder="Logradouro, número..." value={transpEndereco} onChange={e => setTranspEndereco(e.target.value)} />
+          </div>
+        </div>
+
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 80px', gap: 8 }}>
+          <div className="form-group">
+            <label className="form-label">Placa do Veículo</label>
+            <input className="form-input" placeholder="ABC-1234" value={transpPlaca} onChange={e => setTranspPlaca(e.target.value.toUpperCase())} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">UF Veículo</label>
+            <input className="form-input" placeholder="SP" maxLength={2} value={transpUfVeiculo} onChange={e => setTranspUfVeiculo(e.target.value.toUpperCase())} />
+          </div>
+        </div>
+
+        <div style={{ borderTop: '1px solid var(--border)', paddingTop: 12, marginTop: 4 }}>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 8, fontWeight: 600 }}>VOLUMES TRANSPORTADOS</div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            <div className="form-group">
+              <label className="form-label">Quantidade</label>
+              <input className="form-input" type="number" min="0" placeholder="0" value={transpQtd} onChange={e => setTranspQtd(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Espécie</label>
+              <input className="form-input" placeholder="CX, VL, PCT..." value={transpEspecie} onChange={e => setTranspEspecie(e.target.value.toUpperCase())} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Marca</label>
+              <input className="form-input" placeholder="Marca..." value={transpMarca} onChange={e => setTranspMarca(e.target.value)} />
+            </div>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8 }}>
+            <div className="form-group">
+              <label className="form-label">Numeração</label>
+              <input className="form-input" placeholder="—" value={transpNumeracao} onChange={e => setTranspNumeracao(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Peso Bruto (kg)</label>
+              <input className="form-input" type="number" min="0" step="0.001" placeholder="0,000" value={transpPesoBruto} onChange={e => setTranspPesoBruto(e.target.value)} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Peso Líquido (kg)</label>
+              <input className="form-input" type="number" min="0" step="0.001" placeholder="0,000" value={transpPesoLiquido} onChange={e => setTranspPesoLiquido(e.target.value)} />
+            </div>
           </div>
         </div>
       </div>
