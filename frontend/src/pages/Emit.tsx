@@ -83,20 +83,20 @@ const OPERATIONS = [
 
 const PURPOSES: Record<string, { value: string; label: string }[]> = {
   venda: [
-    { value: 'normal', label: 'Venda normal' },
-    { value: 'consumidor_final_pf', label: 'Para consumidor final PF' },
-    { value: 'interestadual', label: 'Interestadual' },
-    { value: 'consumidor_final_pf_interestadual', label: 'Consumidor final PF — outro estado' },
+    { value: 'normal', label: 'Venda para revenda' },
+    { value: 'consumidor_final_pf', label: 'Para consumidor final' },
     { value: 'substituicao_tributaria', label: 'Com Substituição Tributária' },
+    { value: 'exportacao', label: 'Exportação' },
+    { value: 'importacao', label: 'Importação' },
   ],
   remessa: [
     { value: 'conserto', label: 'Para conserto' },
-    { value: 'conserto_interestadual', label: 'Para conserto — outro estado' },
     { value: 'demonstracao', label: 'Para demonstração' },
     { value: 'industrializacao', label: 'Para industrialização' },
     { value: 'deposito', label: 'Para depósito' },
     { value: 'brinde', label: 'Brinde' },
     { value: 'bonificacao', label: 'Bonificação' },
+    { value: 'exportacao', label: 'Exportação' },
   ],
   retorno: [
     { value: 'conserto', label: 'De conserto' },
