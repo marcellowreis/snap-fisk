@@ -28,8 +28,7 @@ const formatCep = (v: string) =>
 
 export default function Company({ user, isFirstAccess, onSaved }: Props) {
   // Popup só aparece no primeiro acesso E se nunca emitiu NF pelo Snap Fisk
-  const nunkaEmitiu = !user.company || (user.company?.proximaNF ?? 1) <= 1;
-  const [showPopup, setShowPopup] = useState((isFirstAccess ?? false) && nunkaEmitiu);
+  const [showPopup, setShowPopup] = useState(isFirstAccess ?? false);
   const [jaEmitiu, setJaEmitiu] = useState<boolean | null>(null);
 
   // Dados da empresa
@@ -58,6 +57,15 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
+    // Se já emitiu alguma NF pelo Snap Fisk, não mostrar popup
+    if (isFirstAccess) {
+      api.get('/api/invoices').then((invoices: any[]) => {
+        if (invoices && invoices.length > 0) {
+          setShowPopup(false);
+        }
+      }).catch(() => {});
+    }
+
     api.get('/api/company').then(c => {
       if (c) {
         setRazaoSocial(c.razaoSocial || '');
