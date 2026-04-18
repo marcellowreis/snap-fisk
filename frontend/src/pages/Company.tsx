@@ -27,8 +27,9 @@ const formatCep = (v: string) =>
   v.replace(/\D/g, '').slice(0, 8).replace(/(\d{5})(\d)/, '$1-$2');
 
 export default function Company({ user, isFirstAccess, onSaved }: Props) {
-  // Pop-up de primeiro acesso
-  const [showPopup, setShowPopup] = useState(isFirstAccess ?? false);
+  // Popup só aparece no primeiro acesso E se nunca emitiu NF pelo Snap Fisk
+  const nunkaEmitiu = !user.company || (user.company?.proximaNF ?? 1) <= 1;
+  const [showPopup, setShowPopup] = useState((isFirstAccess ?? false) && nunkaEmitiu);
   const [jaEmitiu, setJaEmitiu] = useState<boolean | null>(null);
 
   // Dados da empresa
@@ -50,7 +51,6 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
   const [taxRegime, setTaxRegime] = useState('simples_nacional');
   const [serie, setSerie] = useState('0');
   const [proximaNF, setProximaNF] = useState(1);
-
   const [logo, setLogo] = useState('');
   const [loading, setLoading] = useState(false);
   const [loadingCnpj, setLoadingCnpj] = useState(false);
@@ -58,7 +58,6 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    // Carregar dados existentes
     api.get('/api/company').then(c => {
       if (c) {
         setRazaoSocial(c.razaoSocial || '');
@@ -82,7 +81,6 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
         setProximaNF(c.proximaNF || 1);
       }
     }).catch(() => {
-      // Empresa não cadastrada ainda — preenche CNPJ do usuário
       setCnpj(formatCnpj(user.cnpj));
     });
   }, []);
@@ -198,6 +196,7 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
   };
 
   // ─── POP-UP PRIMEIRO ACESSO ───────────────────────────────────────────────
+  // Só aparece quando é o primeiro acesso E nunca emitiu NF pelo Snap Fisk
 
   if (showPopup) {
     return (
@@ -227,6 +226,9 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
               }}
             >
               <div style={{ fontWeight: 700 }}>🆕 Não — é minha primeira vez</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                Vou começar a numeração do zero
+              </div>
             </div>
 
             <div
@@ -240,6 +242,9 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
               }}
             >
               <div style={{ fontWeight: 700 }}>✅ Sim — já usei Sebrae ou outro emissor</div>
+              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
+                Vou usar a Série 3 para não conflitar
+              </div>
             </div>
           </div>
 
@@ -268,7 +273,6 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
       <div className="card">
         <div className="card-title">Dados do Emitente</div>
 
-        {/* CNPJ com busca */}
         <div className="form-group">
           <label className="form-label">CNPJ</label>
           <div style={{ display: 'flex', gap: 8 }}>
@@ -317,55 +321,23 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
           <input className="form-input" style={{ marginTop: 6 }} value={im} onChange={e => setIm(e.target.value)} placeholder="Nº da Inscrição Municipal" />
         </div>
 
-        {/* Regime fixo MEI */}
-        <input type="hidden" value="mei" />
-
-        {/* Logo da empresa */}
         <div className="form-group">
           <label className="form-label">Logo da Empresa (opcional)</label>
           <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginTop: 6 }}>
-            <div
-              style={{
-                width: 80, height: 80, borderRadius: 12,
-                border: '2px dashed var(--border)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                overflow: 'hidden', background: 'var(--bg)', flexShrink: 0,
-              }}
-            >
-              {logo
-                ? <img src={logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                : <span style={{ fontSize: 28 }}>🏢</span>
-              }
+            <div style={{ width: 80, height: 80, borderRadius: 12, border: '2px dashed var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', background: 'var(--bg)', flexShrink: 0 }}>
+              {logo ? <img src={logo} alt="Logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <span style={{ fontSize: 28 }}>🏢</span>}
             </div>
             <div>
-              <label
-                htmlFor="logo-upload"
-                style={{
-                  display: 'inline-block', padding: '8px 16px',
-                  background: 'var(--bg-input)', border: '1px solid var(--border)',
-                  borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600,
-                }}
-              >
+              <label htmlFor="logo-upload" style={{ display: 'inline-block', padding: '8px 16px', background: 'var(--bg-input)', border: '1px solid var(--border)', borderRadius: 8, cursor: 'pointer', fontSize: 13, fontWeight: 600 }}>
                 📷 {logo ? 'Trocar logo' : 'Carregar logo'}
               </label>
-              <input
-                id="logo-upload"
-                type="file"
-                accept="image/png,image/jpeg,image/svg+xml"
-                style={{ display: 'none' }}
-                onChange={handleLogoUpload}
-              />
+              <input id="logo-upload" type="file" accept="image/png,image/jpeg,image/svg+xml" style={{ display: 'none' }} onChange={handleLogoUpload} />
               {logo && (
-                <button
-                  onClick={() => setLogo('')}
-                  style={{ display: 'block', marginTop: 6, background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, cursor: 'pointer' }}
-                >
+                <button onClick={() => setLogo('')} style={{ display: 'block', marginTop: 6, background: 'none', border: 'none', color: 'var(--danger)', fontSize: 12, cursor: 'pointer' }}>
                   ✕ Remover logo
                 </button>
               )}
-              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>
-                PNG, JPG ou SVG · Máx. 500KB
-              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 6 }}>PNG, JPG ou SVG · Máx. 500KB</div>
             </div>
           </div>
         </div>
@@ -382,21 +354,10 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
               className="form-input"
               placeholder="00000-000"
               value={cep}
-              onChange={e => {
-                const f = formatCep(e.target.value);
-                setCep(f);
-                if (f.replace(/\D/g, '').length === 8) buscarCep(f);
-              }}
+              onChange={e => { const f = formatCep(e.target.value); setCep(f); if (f.replace(/\D/g, '').length === 8) buscarCep(f); }}
               onBlur={() => buscarCep(cep)}
             />
-            <button
-              className="btn btn-outline btn-sm"
-              onClick={() => buscarCep(cep)}
-              style={{ whiteSpace: 'nowrap' }}
-              type="button"
-            >
-              🔍 Buscar
-            </button>
+            <button className="btn btn-outline btn-sm" onClick={() => buscarCep(cep)} style={{ whiteSpace: 'nowrap' }} type="button">🔍 Buscar</button>
           </div>
         </div>
 
