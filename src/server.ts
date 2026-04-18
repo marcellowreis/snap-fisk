@@ -657,7 +657,15 @@ app.get('/api/products', authenticate, async (req, res) => {
 app.post('/api/products', authenticate, async (req, res) => {
   const p = productSchema.safeParse(req.body);
   if (!p.success) return res.status(400).json({ error: 'Dados inválidos.', details: p.error.flatten() });
-  const product = await prisma.product.create({ data: { userId: req.userId!, ...p.data } });
+
+  // Gera código automático sequencial se não informado
+  let codigo = p.data.codigo;
+  if (!codigo) {
+    const count = await prisma.product.count({ where: { userId: req.userId! } });
+    codigo = String(count + 1).padStart(4, '0'); // 0001, 0002, 0003...
+  }
+
+  const product = await prisma.product.create({ data: { userId: req.userId!, ...p.data, codigo } });
   return res.status(201).json(product);
 });
 
@@ -838,9 +846,12 @@ app.post('/api/invoices', authenticate, async (req, res) => {
   // Salvar produtos novos no cadastro
   for (const item of p.data.items) {
     if (item.saveProduct && !item.productId) {
+      const count = await prisma.product.count({ where: { userId: req.userId! } });
+      const codigoAuto = String(count + 1).padStart(4, '0');
       await prisma.product.create({
         data: {
           userId: req.userId!,
+          codigo: codigoAuto,
           descricao: item.xProd,
           ncm: item.ncm,
           unidade: item.uCom,
