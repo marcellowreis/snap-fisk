@@ -24,6 +24,9 @@ export default function Danfe({ invoice, company, onClose }: Props) {
   const chave = invoice.chaveAcesso ?? '';
   const chaveFormatada = chave.replace(/(\d{4})/g, '$1 ').trim();
 
+  // Transportador do invoice (se houver)
+  const transp = invoice.transp ?? {};
+
   const gerarBarras = (chave: string) => {
     if (!chave) return '<div style="color:#999;font-size:7pt;padding:2mm 0;">Chave não disponível</div>';
     let bars = '';
@@ -46,10 +49,13 @@ export default function Danfe({ invoice, company, onClose }: Props) {
   const freteLabel = (mod: string) => {
     const m: Record<string, string> = {
       '0': '0 — Emitente (CIF)', '1': '1 — Destinatário (FOB)',
-      '2': '2 — Terceiros', '9': '9 — Sem Frete',
+      '2': '2 — Terceiros', '3': '3 — Próprio Remetente',
+      '4': '4 — Próprio Destinatário', '9': '9 — Sem Frete',
     };
     return m[mod] ?? '9 — Sem Frete';
   };
+
+  const emit = company ?? {};
 
   const gerarHtml = () => `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -61,11 +67,9 @@ export default function Danfe({ invoice, company, onClose }: Props) {
 body{font-family:Arial,Helvetica,sans-serif;font-size:7pt;color:#000;background:#fff;}
 .page{width:210mm;min-height:297mm;margin:0 auto;padding:5mm;}
 .bold{font-weight:bold;}
-.center{text-align:center;}
-.right{text-align:right;}
 
 /* Canhoto */
-.canhoto{border:0.5pt dashed #000;padding:2mm;margin-bottom:3mm;display:grid;grid-template-columns:1fr 36mm;gap:3mm;align-items:center;}
+.canhoto{border:0.5pt dashed #000;padding:2mm;margin-bottom:3mm;display:grid;grid-template-columns:1fr 36mm;gap:3mm;align-items:start;}
 .canhoto-left{font-size:6.5pt;line-height:1.6;}
 .canhoto-right{text-align:right;}
 
@@ -74,7 +78,7 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:7pt;color:#000;background:
 .hdr-emit{padding:2mm;border-right:0.5pt solid #000;}
 .hdr-emit .razao{font-size:9pt;font-weight:bold;margin-bottom:1mm;}
 .hdr-emit .end{font-size:6.5pt;line-height:1.5;}
-.hdr-emit .cnpj{font-size:6.5pt;margin-top:1mm;}
+.hdr-emit .cnpj-line{font-size:6.5pt;margin-top:1mm;}
 .hdr-danfe{border-right:0.5pt solid #000;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2mm;text-align:center;}
 .hdr-danfe .dt{font-size:14pt;font-weight:bold;letter-spacing:4pt;}
 .hdr-danfe .ds{font-size:6pt;margin:1mm 0;line-height:1.4;}
@@ -85,20 +89,21 @@ body{font-family:Arial,Helvetica,sans-serif;font-size:7pt;color:#000;background:
 .hdr-chave{padding:2mm;display:flex;flex-direction:column;gap:1.5mm;}
 .lbl{font-size:5.5pt;text-transform:uppercase;color:#444;}
 .val{font-size:7.5pt;font-weight:bold;}
-.val-sm{font-size:6.5pt;font-weight:bold;word-break:break-all;}
+.val-sm{font-size:6.5pt;font-weight:bold;word-break:break-word;}
 
 /* Seções */
 .sec{border:0.5pt solid #000;border-top:none;}
 .sec-title{background:#ccc;font-size:5.5pt;font-weight:bold;text-transform:uppercase;padding:0.8mm 1.5mm;border-bottom:0.5pt solid #000;letter-spacing:0.5pt;}
 .campo{padding:0.8mm 1.5mm;border-right:0.5pt solid #000;}
 .campo:last-child{border-right:none;}
-.row{display:flex;}
-.row .campo{flex:1;}
 .bt{border-top:0.5pt solid #000;}
 .grid2{display:grid;grid-template-columns:1fr 1fr;}
 .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;}
 .grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;}
 .grid7{display:grid;grid-template-columns:repeat(7,1fr);}
+
+/* Emitente fiscal */
+.emit-fiscal{border:0.5pt solid #000;border-top:none;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;}
 
 /* Tabela itens */
 table.itens{width:100%;border-collapse:collapse;font-size:6pt;}
@@ -109,13 +114,9 @@ table.itens tr:nth-child(even) td{background:#f8f8f8;}
 .tdr{text-align:right;}
 .tdc{text-align:center;}
 
-/* Linha fiscal */
-.emit-fiscal{border:0.5pt solid #000;border-top:none;display:grid;grid-template-columns:1fr 1fr 1fr 1fr;}
-
 @media print{
   body{margin:0;}
   .page{padding:3mm;}
-  .no-print{display:none!important;}
 }
 </style>
 </head>
@@ -125,12 +126,12 @@ table.itens tr:nth-child(even) td{background:#f8f8f8;}
 <!-- CANHOTO -->
 <div class="canhoto">
   <div class="canhoto-left">
-    <div class="bold" style="font-size:7.5pt;">${company?.razaoSocial ?? ''}</div>
-    <div>${[company?.logradouro, company?.numero, company?.bairro].filter(Boolean).join(', ')}</div>
-    <div>${company?.xMun ?? ''} — ${company?.uf ?? ''} — ${company?.cep ? 'CEP ' + company.cep : ''}</div>
-    ${company?.fone ? '<div>Fone: ' + company.fone + '</div>' : ''}
+    <div class="bold" style="font-size:7.5pt;">${emit.razaoSocial ?? ''}</div>
+    <div>${[emit.logradouro, emit.numero, emit.bairro].filter(Boolean).join(', ')}</div>
+    <div>${emit.xMun ?? ''} — ${emit.uf ?? ''} — ${emit.cep ? 'CEP ' + emit.cep : ''}</div>
+    ${emit.fone ? '<div>Fone: ' + emit.fone + '</div>' : ''}
     <div style="margin-top:2mm;border-top:0.5pt dashed #999;padding-top:1.5mm;">
-      RECEBEMOS DE <strong>${company?.razaoSocial ?? ''}</strong> OS PRODUTOS E/OU SERVIÇOS CONSTANTES NA NOTA FISCAL INDICADA AO LADO
+      RECEBEMOS DE <strong>${emit.razaoSocial ?? ''}</strong> OS PRODUTOS E/OU SERVIÇOS CONSTANTES NA NOTA FISCAL INDICADA AO LADO
     </div>
     <div style="margin-top:2mm;">
       DATA DE RECEBIMENTO: ____/____/________ &nbsp;&nbsp; ASSINATURA DO RECEBEDOR: _________________________________
@@ -145,20 +146,22 @@ table.itens tr:nth-child(even) td{background:#f8f8f8;}
 
 <!-- CABEÇALHO PRINCIPAL -->
 <div class="hdr">
+  <!-- Emitente -->
   <div class="hdr-emit">
-    <div class="razao">${company?.razaoSocial ?? ''}</div>
+    <div class="razao">${emit.razaoSocial ?? ''}</div>
     <div class="end">
-      ${[company?.logradouro, company?.numero].filter(Boolean).join(', ')}<br/>
-      ${company?.bairro ?? ''} — ${company?.xMun ?? ''} — ${company?.uf ?? ''}<br/>
-      ${company?.cep ? 'CEP: ' + company.cep : ''}
-      ${company?.fone ? ' &nbsp; Fone: ' + company.fone : ''}
+      ${[emit.logradouro, emit.numero].filter(Boolean).join(', ')}<br/>
+      ${emit.bairro ?? ''} — ${emit.xMun ?? ''} — ${emit.uf ?? ''}<br/>
+      ${emit.cep ? 'CEP: ' + emit.cep : ''}
+      ${emit.fone ? ' &nbsp; Fone: ' + emit.fone : ''}
     </div>
-    <div class="cnpj">
-      <span class="lbl">CNPJ: </span><strong>${company?.cnpj ?? ''}</strong>
-      ${company?.ie ? ' &nbsp; <span class="lbl">IE: </span><strong>' + company.ie + '</strong>' : ''}
+    <div class="cnpj-line">
+      <span class="lbl">CNPJ: </span><strong>${emit.cnpj ?? ''}</strong>
+      ${emit.ie ? ' &nbsp; <span class="lbl">IE: </span><strong>' + emit.ie + '</strong>' : ''}
     </div>
   </div>
 
+  <!-- Bloco DANFE central -->
   <div class="hdr-danfe">
     <div class="dt">DANFE</div>
     <div class="ds">Documento Auxiliar da<br/>Nota Fiscal Eletrônica</div>
@@ -172,6 +175,7 @@ table.itens tr:nth-child(even) td{background:#f8f8f8;}
     ${invoice.ambiente === '2' ? '<div class="hmg">HOMOLOGAÇÃO — SEM VALOR FISCAL</div>' : ''}
   </div>
 
+  <!-- Chave de acesso -->
   <div class="hdr-chave">
     <div>
       <div class="lbl">Chave de Acesso</div>
@@ -198,9 +202,9 @@ table.itens tr:nth-child(even) td{background:#f8f8f8;}
 
 <!-- DADOS FISCAIS DO EMITENTE -->
 <div class="emit-fiscal">
-  <div class="campo"><div class="lbl">Inscrição Estadual</div><div class="val-sm">${company?.ie ?? 'ISENTO'}</div></div>
+  <div class="campo"><div class="lbl">Inscrição Estadual</div><div class="val-sm">${emit.ie ?? 'ISENTO'}</div></div>
   <div class="campo"><div class="lbl">Inscrição Estadual Subst. Trib.</div><div class="val-sm">—</div></div>
-  <div class="campo"><div class="lbl">CNPJ</div><div class="val-sm">${company?.cnpj ?? ''}</div></div>
+  <div class="campo"><div class="lbl">CNPJ</div><div class="val-sm">${emit.cnpj ?? ''}</div></div>
   <div class="campo" style="border-right:none;"><div class="lbl">CRT</div><div class="val-sm">4 — Simples Nacional / MEI</div></div>
 </div>
 
@@ -256,29 +260,82 @@ table.itens tr:nth-child(even) td{background:#f8f8f8;}
     <div class="campo"><div class="lbl">Desconto</div><div class="val-sm">R$ ${fmt(vDesc)}</div></div>
     <div class="campo"><div class="lbl">Outras Despesas</div><div class="val-sm">0,00</div></div>
     <div class="campo"><div class="lbl">Valor do IPI</div><div class="val-sm">0,00</div></div>
-    <div class="campo"><div class="lbl">V. Aprox. Tributos</div><div class="val-sm">0,00</div></div>
-    <div class="campo" style="border-right:none;"><div class="lbl" style="font-weight:bold;">V. Total da Nota</div><div style="font-size:9pt;font-weight:bold;">R$ ${fmt(vTotal)}</div></div>
+    <div class="campo"><div class="lbl">V. Total Produtos</div><div class="val-sm">R$ ${fmt(vProd)}</div></div>
+    <div class="campo" style="border-right:none;"><div class="lbl" style="font-weight:bold;color:#000;">V. Total da Nota</div><div style="font-size:9pt;font-weight:bold;">R$ ${fmt(vTotal)}</div></div>
   </div>
 </div>
 
-<!-- TRANSPORTADOR -->
+<!-- TRANSPORTADOR / VOLUMES -->
 <div class="sec">
   <div class="sec-title">Transportador / Volumes Transportados</div>
-  <div style="display:grid;grid-template-columns:2fr 1fr 1fr 1fr 0.5fr 1fr;">
-    <div class="campo"><div class="lbl">Razão Social</div><div class="val-sm">—</div></div>
-    <div class="campo"><div class="lbl">Frete por Conta</div><div class="val-sm">${freteLabel(invoice.modFrete)}</div></div>
-    <div class="campo"><div class="lbl">Código ANTT</div><div class="val-sm">—</div></div>
-    <div class="campo"><div class="lbl">Placa do Veículo</div><div class="val-sm">—</div></div>
-    <div class="campo"><div class="lbl">UF</div><div class="val-sm">—</div></div>
-    <div class="campo" style="border-right:none;"><div class="lbl">CNPJ / CPF</div><div class="val-sm">—</div></div>
+  <!-- Linha 1: Nome, Tipo Frete, Placa, UF Veículo, Cód.ANTT, CNPJ/CPF -->
+  <div style="display:grid;grid-template-columns:2fr 1fr 1fr 0.5fr 1fr 1fr;">
+    <div class="campo">
+      <div class="lbl">Nome do Transportador</div>
+      <div class="val-sm">${transp.razaoSocial ?? '—'}</div>
+    </div>
+    <div class="campo">
+      <div class="lbl">Tipo de Frete</div>
+      <div class="val-sm">${freteLabel(invoice.modFrete)}</div>
+    </div>
+    <div class="campo">
+      <div class="lbl">Placa do Veículo</div>
+      <div class="val-sm">${transp.placa ?? '—'}</div>
+    </div>
+    <div class="campo">
+      <div class="lbl">UF Veículo</div>
+      <div class="val-sm">${transp.ufVeiculo ?? '—'}</div>
+    </div>
+    <div class="campo">
+      <div class="lbl">Código ANTT</div>
+      <div class="val-sm">${transp.codigoAntt ?? '—'}</div>
+    </div>
+    <div class="campo" style="border-right:none;">
+      <div class="lbl">CNPJ / CPF</div>
+      <div class="val-sm">${transp.cnpjCpf ?? '—'}</div>
+    </div>
   </div>
-  <div class="bt" style="display:grid;grid-template-columns:2fr 1fr 0.5fr 1fr 1fr 1fr;">
-    <div class="campo"><div class="lbl">Endereço</div><div class="val-sm">—</div></div>
-    <div class="campo"><div class="lbl">Município</div><div class="val-sm">—</div></div>
-    <div class="campo"><div class="lbl">UF</div><div class="val-sm">—</div></div>
-    <div class="campo"><div class="lbl">Insc. Estadual</div><div class="val-sm">—</div></div>
-    <div class="campo"><div class="lbl">Quantidade / Espécie</div><div class="val-sm">—</div></div>
-    <div class="campo" style="border-right:none;"><div class="lbl">Peso Bruto / Líquido</div><div class="val-sm">—</div></div>
+  <!-- Linha 2: CEP, Endereço, Inscrição Estadual -->
+  <div class="bt" style="display:grid;grid-template-columns:0.6fr 2fr 1fr;">
+    <div class="campo">
+      <div class="lbl">CEP</div>
+      <div class="val-sm">${transp.cep ?? '—'}</div>
+    </div>
+    <div class="campo">
+      <div class="lbl">Endereço</div>
+      <div class="val-sm">${transp.endereco ?? '—'}</div>
+    </div>
+    <div class="campo" style="border-right:none;">
+      <div class="lbl">Inscrição Estadual</div>
+      <div class="val-sm">${transp.ie ?? '—'}</div>
+    </div>
+  </div>
+  <!-- Linha 3: Qtd, Medida/Espécie, Marca, Numeração, Peso Bruto, Peso Líquido -->
+  <div class="bt" style="display:grid;grid-template-columns:0.6fr 0.8fr 1fr 1fr 1fr 1fr;">
+    <div class="campo">
+      <div class="lbl">Quantidade</div>
+      <div class="val-sm">${transp.quantidade ?? '—'}</div>
+    </div>
+    <div class="campo">
+      <div class="lbl">Medida / Espécie</div>
+      <div class="val-sm">${transp.especie ?? '—'}</div>
+    </div>
+    <div class="campo">
+      <div class="lbl">Marca</div>
+      <div class="val-sm">${transp.marca ?? '—'}</div>
+    </div>
+    <div class="campo">
+      <div class="lbl">Numeração</div>
+      <div class="val-sm">${transp.numeracao ?? '—'}</div>
+    </div>
+    <div class="campo">
+      <div class="lbl">Peso Bruto (kg)</div>
+      <div class="val-sm">${transp.pesoBruto ?? '—'}</div>
+    </div>
+    <div class="campo" style="border-right:none;">
+      <div class="lbl">Peso Líquido (kg)</div>
+      <div class="val-sm">${transp.pesoLiquido ?? '—'}</div>
+    </div>
   </div>
 </div>
 
@@ -330,7 +387,7 @@ table.itens tr:nth-child(even) td{background:#f8f8f8;}
 <div class="sec">
   <div class="sec-title">Cálculo do ISSQN</div>
   <div class="grid4">
-    <div class="campo"><div class="lbl">Inscrição Municipal</div><div class="val-sm">${company?.im ?? '—'}</div></div>
+    <div class="campo"><div class="lbl">Inscrição Municipal</div><div class="val-sm">${emit.im ?? '—'}</div></div>
     <div class="campo"><div class="lbl">Valor Total dos Serviços</div><div class="val-sm">R$ 0,00</div></div>
     <div class="campo"><div class="lbl">Base de Cálculo do ISSQN</div><div class="val-sm">R$ 0,00</div></div>
     <div class="campo" style="border-right:none;"><div class="lbl">Valor do ISSQN</div><div class="val-sm">R$ 0,00</div></div>
