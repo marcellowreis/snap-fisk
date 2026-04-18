@@ -46,6 +46,7 @@ const ajustarCfop = (
   cfop: string,
   originUf: string,
   destinationUf: string,
+  purpose?: string,
 ): string => {
   if (!cfop || cfop.length < 4) return cfop;
 
@@ -59,8 +60,15 @@ const ajustarCfop = (
   // ── SAÍDA (regra base 5xxx) ──────────────────────────────────────
   if (primeiro === '5') {
     if (isExteriorDestino) return '7' + resto;      // exportação
-    if (isInterestadual)   return '6' + resto;      // interestadual
-    return cfop;                                     // intraestadual (mantém 5xxx)
+
+    if (isInterestadual) {
+      // Consumidor final não contribuinte interestadual → 6.108
+      if (purpose === 'consumidor_final_pf' && resto === '.102') return '6.108';
+      return '6' + resto;                           // interestadual genérico
+    }
+
+    // Consumidor final intraestadual → mantém 5.102 (não é 5.108)
+    return cfop;                                    // intraestadual (mantém 5xxx)
   }
 
   // ── ENTRADA (regra base 1xxx) ────────────────────────────────────
@@ -170,7 +178,7 @@ export const resolveFiscalRule = async (
   if (bestRule) {
     // Ajusta CFOP conforme origem/destino
     const cfopOriginal = bestRule.cfop;
-    const cfopAjustado = ajustarCfop(cfopOriginal, input.originUf, input.destinationUf);
+    const cfopAjustado = ajustarCfop(cfopOriginal, input.originUf, input.destinationUf, input.purpose);
     const naturezaAjustada = ajustarNatureza(bestRule.naturezaOperacao, cfopAjustado, cfopOriginal);
     const alertaAjustado = gerarAlerta(cfopOriginal, cfopAjustado, bestRule.mensagemAlerta);
 
