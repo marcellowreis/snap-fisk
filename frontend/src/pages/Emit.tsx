@@ -830,17 +830,6 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
               )}
             </div>
 
-            {/* Código do produto */}
-            <div className="form-group">
-              <label className="form-label">Código do item <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>(opcional)</span></label>
-              <input
-                className="form-input"
-                placeholder="Ex: 001, SKU-123..."
-                value={item.cProd ?? ''}
-                onChange={e => updateItem(item.id, { cProd: e.target.value })}
-              />
-            </div>
-
             <div className="form-group" style={{ position: 'relative' }}>
               <label className="form-label">Produto / Serviço</label>
               <input
