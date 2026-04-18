@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { api } from '../api';
 import type { User } from '../App';
+import Danfe from './Danfe';
 
 type Customer = {
   id: string;
@@ -22,6 +23,7 @@ type Customer = {
 
 type Product = {
   id: string;
+  codigo?: string;
   descricao: string;
   ncm: string;
   unidade: string;
@@ -31,6 +33,7 @@ type Product = {
 type Item = {
   id: string;
   productId?: string;
+  cProd?: string;
   xProd: string;
   ncm: string;
   ncmSugerido?: string;
@@ -120,6 +123,13 @@ const FORMAS_PAG = [
   { value: '17', label: 'PIX' },
 ];
 
+const MOD_FRETE = [
+  { value: '9', label: 'Sem frete' },
+  { value: '0', label: 'Por conta do emitente (CIF)' },
+  { value: '1', label: 'Por conta do destinatário (FOB)' },
+  { value: '2', label: 'Por conta de terceiros' },
+];
+
 const emptyCustomer = (): NewCustomer => ({
   tipoPessoa: 'PF',
   cpfCnpj: '',
@@ -207,12 +217,18 @@ export default function Emit({ user, fiscalContext, onBack }: Props) {
   const [showNcmSearch, setShowNcmSearch] = useState<Record<string, boolean>>({});
   const ncmSearchTimer = useRef<Record<string, any>>({});
 
+  // ─── FRETE E DESCONTO ────────────────────────────────────────────────────
+  const [modFrete, setModFrete] = useState('9');
+  const [vFrete, setVFrete] = useState(0);
+  const [vDesc, setVDesc] = useState(0);
+
   const [tPag, setTPag] = useState('90');
   const [vPag, setVPag] = useState(0);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<any>(null);
+  const [showDanfe, setShowDanfe] = useState(false);
   const ncmTimer = useRef<Record<string, any>>({});
 
   useEffect(() => {
@@ -346,13 +362,11 @@ export default function Emit({ user, fiscalContext, onBack }: Props) {
     if (descricao.length < 3) return;
     ncmTimer.current[itemId] = setTimeout(async () => {
       try {
-        // Tenta primeiro sugestão via IA
         const data = await api.get(`/api/ncm/ai-suggest?descricao=${encodeURIComponent(descricao)}`);
         if (data?.ncm) {
           updateItem(itemId, { ncm: data.ncm, ncmSugerido: data.ncm });
           return;
         }
-        // Fallback: mapeamento local
         const local = await api.get(`/api/ncm/suggest?descricao=${encodeURIComponent(descricao)}`);
         if (local?.ncm) {
           updateItem(itemId, { ncm: local.ncm, ncmSugerido: local.ncm });
@@ -404,12 +418,20 @@ export default function Emit({ user, fiscalContext, onBack }: Props) {
   };
 
   const selectProduct = (itemId: string, product: Product) => {
-    updateItem(itemId, { productId: product.id, xProd: product.descricao, ncm: product.ncm, uCom: product.unidade, vUnCom: product.valorUnit });
+    updateItem(itemId, {
+      productId: product.id,
+      cProd: product.codigo || undefined,
+      xProd: product.descricao,
+      ncm: product.ncm,
+      uCom: product.unidade,
+      vUnCom: product.valorUnit,
+    });
     setShowProductList(prev => ({ ...prev, [itemId]: false }));
     setProductSearch(prev => ({ ...prev, [itemId]: product.descricao }));
   };
 
-  const vTotal = items.reduce((s, i) => s + i.vProd, 0);
+  const vTotalItens = items.reduce((s, i) => s + i.vProd, 0);
+  const vTotal = vTotalItens + vFrete - vDesc;
 
   // ─── COMPARTILHAR ──────────────────────────────────────────────────────────
 
@@ -451,13 +473,14 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
         cstCsosn: fiscalResult.cstCsosn || '102',
         infCpl: fiscalResult.informacoesComplementares || '',
         ambiente: '2',
-        vFrete: 0,
-        vDesc: 0,
-        modFrete: '9',
+        vFrete,
+        vDesc,
+        modFrete,
         tPag,
         vPag,
         items: items.map(i => ({
           productId: i.productId,
+          cProd: i.cProd,
           xProd: i.xProd,
           ncm: i.ncm.replace(/\D/g, ''),
           cfop: i.cfop || fiscalResult.cfop,
@@ -492,8 +515,29 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
   // ─── TELA DE SUCESSO ───────────────────────────────────────────────────────
 
   if (success) {
+    // Monta objeto enriquecido para o DANFE
+    const invoiceParaDanfe = {
+      ...success,
+      customer: selectedCustomer,
+      vFrete,
+      vDesc,
+      modFrete,
+      tPag,
+      vPag,
+      infCpl: fiscalResult?.informacoesComplementares || '',
+    };
+
     return (
       <div>
+        {/* Visualizador DANFE em overlay */}
+        {showDanfe && (
+          <Danfe
+            invoice={invoiceParaDanfe}
+            company={company}
+            onClose={() => setShowDanfe(false)}
+          />
+        )}
+
         <div className="alert alert-success">✅ NF-e nº {success.numero} gerada com sucesso!</div>
         <div className="card">
           <div className="card-title">Resumo da NF-e</div>
@@ -521,7 +565,10 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
           <div className="alert alert-warning mt-8">⚠️ Ambiente de homologação — NF sem valor fiscal</div>
 
           {/* Botões de ação */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 16 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 8, marginTop: 16 }}>
+            <button className="btn btn-primary" onClick={() => setShowDanfe(true)}>
+              📋 Ver DANFE
+            </button>
             <button className="btn btn-primary" onClick={() => downloadXml(success.id, success.numero)}>
               📥 Baixar XML
             </button>
@@ -543,6 +590,9 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
             setCustomerId('');
             setCustomerSearch('');
             setSelectedCustomer(null);
+            setVFrete(0);
+            setVDesc(0);
+            setModFrete('9');
           }}>
             + Nova NF-e
           </button>
@@ -780,6 +830,17 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
               )}
             </div>
 
+            {/* Código do produto */}
+            <div className="form-group">
+              <label className="form-label">Código do item <span style={{ fontSize: 11, color: 'var(--text-muted)' }}>(opcional)</span></label>
+              <input
+                className="form-input"
+                placeholder="Ex: 001, SKU-123..."
+                value={item.cProd ?? ''}
+                onChange={e => updateItem(item.id, { cProd: e.target.value })}
+              />
+            </div>
+
             <div className="form-group" style={{ position: 'relative' }}>
               <label className="form-label">Produto / Serviço</label>
               <input
@@ -798,7 +859,9 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
                   {products.map(p => (
                     <div key={p.id} onClick={() => selectProduct(item.id, p)} style={{ padding: '8px 12px', cursor: 'pointer', borderBottom: '1px solid var(--border)', fontSize: 13 }}>
                       <div style={{ fontWeight: 600 }}>{p.descricao}</div>
-                      <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>NCM {p.ncm} · {p.unidade} · R$ {p.valorUnit.toFixed(2)}</div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: 11 }}>
+                        {p.codigo ? `Cód: ${p.codigo} · ` : ''}NCM {p.ncm} · {p.unidade} · R$ {p.valorUnit.toFixed(2)}
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -929,8 +992,73 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
         ))}
 
         <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderTop: '1px solid var(--border)' }}>
-          <span style={{ fontWeight: 600 }}>Total da NF</span>
-          <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary-light)' }}>R$ {vTotal.toFixed(2).replace('.', ',')}</span>
+          <span style={{ fontWeight: 600 }}>Subtotal dos itens</span>
+          <span style={{ fontSize: 18, fontWeight: 700, color: 'var(--primary-light)' }}>R$ {vTotalItens.toFixed(2).replace('.', ',')}</span>
+        </div>
+      </div>
+
+      {/* FRETE E DESCONTO */}
+      <div className="card">
+        <div className="card-title">Frete e Desconto</div>
+
+        <div className="form-group">
+          <label className="form-label">Modalidade do Frete</label>
+          <select className="form-select" value={modFrete} onChange={e => { setModFrete(e.target.value); if (e.target.value === '9') setVFrete(0); }}>
+            {MOD_FRETE.map(f => <option key={f.value} value={f.value}>{f.label}</option>)}
+          </select>
+        </div>
+
+        {modFrete !== '9' && (
+          <div className="form-group">
+            <label className="form-label">Valor do Frete (R$)</label>
+            <input
+              className="form-input"
+              type="text"
+              inputMode="numeric"
+              placeholder="0,00"
+              value={vFrete === 0 ? '' : vFrete.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              onChange={e => {
+                const raw = e.target.value.replace(/\D/g, '');
+                setVFrete(raw ? parseFloat(raw) / 100 : 0);
+              }}
+            />
+          </div>
+        )}
+
+        <div className="form-group">
+          <label className="form-label">Desconto (R$)</label>
+          <input
+            className="form-input"
+            type="text"
+            inputMode="numeric"
+            placeholder="0,00"
+            value={vDesc === 0 ? '' : vDesc.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            onChange={e => {
+              const raw = e.target.value.replace(/\D/g, '');
+              setVDesc(raw ? parseFloat(raw) / 100 : 0);
+            }}
+          />
+        </div>
+
+        {/* Resumo total */}
+        <div style={{ background: 'var(--bg)', borderRadius: 8, padding: 12, marginTop: 4 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4, color: 'var(--text-muted)' }}>
+            <span>Subtotal</span><span>R$ {vTotalItens.toFixed(2).replace('.', ',')}</span>
+          </div>
+          {vFrete > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4, color: 'var(--text-muted)' }}>
+              <span>+ Frete</span><span>R$ {vFrete.toFixed(2).replace('.', ',')}</span>
+            </div>
+          )}
+          {vDesc > 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, marginBottom: 4, color: 'var(--text-muted)' }}>
+              <span>− Desconto</span><span>R$ {vDesc.toFixed(2).replace('.', ',')}</span>
+            </div>
+          )}
+          <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: 8, borderTop: '1px solid var(--border)' }}>
+            <span style={{ fontWeight: 700 }}>Total da NF</span>
+            <span style={{ fontSize: 20, fontWeight: 800, color: 'var(--primary-light)' }}>R$ {vTotal.toFixed(2).replace('.', ',')}</span>
+          </div>
         </div>
       </div>
 
