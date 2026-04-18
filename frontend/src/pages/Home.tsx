@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { api } from '../api';
 import type { User, FiscalContext } from '../App';
 
-const UFS = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO'];
+const UFS = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO','EX'];
 
 const OPERATIONS = [
   { value: 'venda', label: 'Venda' },
@@ -15,20 +15,20 @@ const OPERATIONS = [
 
 const PURPOSES: Record<string, { value: string; label: string }[]> = {
   venda: [
-    { value: 'normal', label: 'Venda normal' },
-    { value: 'consumidor_final_pf', label: 'Para consumidor final PF' },
-    { value: 'interestadual', label: 'Interestadual' },
-    { value: 'consumidor_final_pf_interestadual', label: 'Consumidor final PF — outro estado' },
+    { value: 'normal', label: 'Venda para revenda' },
+    { value: 'consumidor_final_pf', label: 'Para consumidor final' },
     { value: 'substituicao_tributaria', label: 'Com Substituição Tributária' },
+    { value: 'exportacao', label: 'Exportação' },
+    { value: 'importacao', label: 'Importação' },
   ],
   remessa: [
     { value: 'conserto', label: 'Para conserto' },
-    { value: 'conserto_interestadual', label: 'Para conserto — outro estado' },
     { value: 'demonstracao', label: 'Para demonstração' },
     { value: 'industrializacao', label: 'Para industrialização' },
     { value: 'deposito', label: 'Para depósito' },
     { value: 'brinde', label: 'Brinde' },
     { value: 'bonificacao', label: 'Bonificação' },
+    { value: 'exportacao', label: 'Exportação' },
   ],
   retorno: [
     { value: 'conserto', label: 'De conserto' },
@@ -53,7 +53,7 @@ type Props = {
 export default function Home({ user, onNeedPlan, onEmitWithContext }: Props) {
   const company = user.company;
   const [originUf, setOriginUf] = useState(company?.uf ?? 'SP');
-  const [destinationUf, setDestinationUf] = useState('SP');
+  const [destinationUf, setDestinationUf] = useState(company?.uf ?? 'SP');
   const [operation, setOperation] = useState('');
   const [purpose, setPurpose] = useState('');
   const [result, setResult] = useState<any>(null);
@@ -62,6 +62,14 @@ export default function Home({ user, onNeedPlan, onEmitWithContext }: Props) {
   const [copied, setCopied] = useState('');
 
   const taxRegime = company?.taxRegime ?? 'simples_nacional';
+
+  // Detecta automaticamente o tipo de operação pela UF
+  const getFlowLabel = () => {
+    if (destinationUf === 'EX') return '🌍 Exportação';
+    if (originUf === 'EX') return '🌍 Importação';
+    if (originUf !== destinationUf) return '🔀 Interestadual';
+    return '📍 Intraestadual';
+  };
 
   const handleOperation = (op: string) => {
     setOperation(op);
@@ -122,18 +130,42 @@ export default function Home({ user, onNeedPlan, onEmitWithContext }: Props) {
       <div className="card">
         <div className="card-title">Consultar Motor Fiscal</div>
 
-        <div className="form-group">
-          <label className="form-label">UF Origem</label>
-          <select className="form-select" value={originUf} onChange={e => setOriginUf(e.target.value)}>
-            {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
-          </select>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+          <div className="form-group">
+            <label className="form-label">UF Origem</label>
+            <select className="form-select" value={originUf} onChange={e => { setOriginUf(e.target.value); setResult(null); }}>
+              {UFS.map(uf => <option key={uf} value={uf}>{uf === 'EX' ? 'EX — Exterior' : uf}</option>)}
+            </select>
+          </div>
+          <div className="form-group">
+            <label className="form-label">UF Destino</label>
+            <select className="form-select" value={destinationUf} onChange={e => { setDestinationUf(e.target.value); setResult(null); }}>
+              {UFS.map(uf => <option key={uf} value={uf}>{uf === 'EX' ? 'EX — Exterior' : uf}</option>)}
+            </select>
+          </div>
         </div>
 
-        <div className="form-group">
-          <label className="form-label">UF Destino</label>
-          <select className="form-select" value={destinationUf} onChange={e => setDestinationUf(e.target.value)}>
-            {UFS.map(uf => <option key={uf} value={uf}>{uf}</option>)}
-          </select>
+        {/* Badge automático de tipo de operação */}
+        <div style={{ marginBottom: 12 }}>
+          <span style={{
+            display: 'inline-block',
+            background: destinationUf === 'EX' || originUf === 'EX'
+              ? 'rgba(99,102,241,0.15)'
+              : originUf !== destinationUf
+                ? 'rgba(245,158,11,0.15)'
+                : 'rgba(34,197,94,0.15)',
+            color: destinationUf === 'EX' || originUf === 'EX'
+              ? 'var(--primary-light)'
+              : originUf !== destinationUf
+                ? 'var(--warning)'
+                : 'var(--success)',
+            borderRadius: 6,
+            padding: '3px 10px',
+            fontSize: 12,
+            fontWeight: 600,
+          }}>
+            {getFlowLabel()}
+          </span>
         </div>
 
         <div className="form-group">
@@ -154,7 +186,6 @@ export default function Home({ user, onNeedPlan, onEmitWithContext }: Props) {
           </div>
         )}
 
-        {/* Regime tributário oculto — usa o da empresa */}
         {company?.taxRegime && (
           <div style={{ fontSize: 12, color: 'var(--text-muted)', marginBottom: 12 }}>
             🏢 Regime: <strong>{company.taxRegime === 'simples_nacional' || company.taxRegime === 'mei' ? 'Simples Nacional / MEI' : company.taxRegime}</strong>
