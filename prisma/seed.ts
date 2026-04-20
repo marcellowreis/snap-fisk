@@ -6,6 +6,23 @@ async function main() {
   console.log('🌱 Iniciando seed de regras fiscais para MEI...');
 
   const rules = [
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ATENÇÃO — NT 2024.001 v1.20 (vigente em produção desde 01/04/2025)
+  // Para MEI (CRT=4), a regra N12a-90 restringe CFOPs permitidos:
+  //   CSOSN 102 → APENAS 5.102 e 6.102
+  //   CSOSN 900 → APENAS: 1.202, 1.904, 2.202, 2.904, 5.202, 5.904, 6.202,
+  //               6.904, 1.501-1.506, 1.553, 2.501-2.506, 2.553,
+  //               5.501, 5.502, 5.504, 5.505, 5.551, 5.933,
+  //               6.501, 6.502, 6.504, 6.505, 6.551, 6.933
+  //
+  // CFOPs BLOQUEADOS para MEI (Rejeição 337 na SEFAZ):
+  //   ❌ 5.915/6.915 (conserto), 1.916/2.916 (retorno conserto)
+  //   ❌ 5.910/6.910 (bonificação/brinde)
+  //   ❌ 5.912/5.913 (demonstração)
+  //   ❌ 5.152 (transferência), 5.201 (devolução compra)
+  //   ❌ 5.901/5.902 (industrialização), 5.905/5.906 (depósito)
+  // ═══════════════════════════════════════════════════════════════════════════
+
     // ─── VENDAS — REVENDA ─────────────────────────────────────────────────────
     // O motor fiscal ajusta automaticamente:
     //   5.102 (intraestadual) → 6.102 (interestadual) → 7.102 (exportação)
@@ -127,7 +144,7 @@ async function main() {
       originUf: null,
       destinationUf: null,
       operation: 'remessa',
-      purpose: 'conserto',
+      purpose: 'conserto', // ⚠️ BLOQUEADO para MEI (NT 2024.001)
       taxRegime: 'simples_nacional',
       cfop: '5.915',
       cstCsosn: '400',
@@ -149,7 +166,7 @@ async function main() {
       originUf: null,
       destinationUf: null,
       operation: 'retorno',
-      purpose: 'conserto',
+      purpose: 'conserto', // ⚠️ BLOQUEADO para MEI (NT 2024.001)
       taxRegime: 'simples_nacional',
       cfop: '5.916',
       cstCsosn: '400',
@@ -171,7 +188,7 @@ async function main() {
       originUf: null,
       destinationUf: null,
       operation: 'remessa',
-      purpose: 'demonstracao',
+      purpose: 'demonstracao', // ⚠️ BLOQUEADO para MEI (NT 2024.001)
       taxRegime: 'simples_nacional',
       cfop: '5.912',
       cstCsosn: '400',
@@ -193,7 +210,7 @@ async function main() {
       originUf: null,
       destinationUf: null,
       operation: 'retorno',
-      purpose: 'demonstracao',
+      purpose: 'demonstracao', // ⚠️ BLOQUEADO para MEI (NT 2024.001)
       taxRegime: 'simples_nacional',
       cfop: '5.913',
       cstCsosn: '400',
@@ -215,7 +232,7 @@ async function main() {
       originUf: null,
       destinationUf: null,
       operation: 'devolucao',
-      purpose: 'compra',
+      purpose: 'compra', // ⚠️ CFOP 5.201 BLOQUEADO para MEI - apenas 5.202 e 6.202 permitidos
       taxRegime: 'simples_nacional',
       cfop: '5.201',
       cstCsosn: '400',
@@ -279,7 +296,7 @@ async function main() {
       originUf: null,
       destinationUf: null,
       operation: 'remessa',
-      purpose: 'brinde',
+      purpose: 'brinde', // ⚠️ BLOQUEADO para MEI (NT 2024.001)
       taxRegime: 'simples_nacional',
       cfop: '5.910',
       cstCsosn: '102',
@@ -299,7 +316,7 @@ async function main() {
       originUf: null,
       destinationUf: null,
       operation: 'remessa',
-      purpose: 'bonificacao',
+      purpose: 'bonificacao', // ⚠️ BLOQUEADO para MEI (NT 2024.001)
       taxRegime: 'simples_nacional',
       cfop: '5.910',
       cstCsosn: '102',
@@ -343,7 +360,7 @@ async function main() {
       originUf: null,
       destinationUf: null,
       operation: 'remessa',
-      purpose: 'industrializacao',
+      purpose: 'industrializacao', // ⚠️ BLOQUEADO para MEI (NT 2024.001)
       taxRegime: 'simples_nacional',
       cfop: '5.901',
       cstCsosn: '400',
@@ -363,7 +380,7 @@ async function main() {
       originUf: null,
       destinationUf: null,
       operation: 'retorno',
-      purpose: 'industrializacao',
+      purpose: 'industrializacao', // ⚠️ BLOQUEADO para MEI (NT 2024.001)
       taxRegime: 'simples_nacional',
       cfop: '5.902',
       cstCsosn: '400',
@@ -385,7 +402,7 @@ async function main() {
       originUf: null,
       destinationUf: null,
       operation: 'remessa',
-      purpose: 'deposito',
+      purpose: 'deposito', // ⚠️ BLOQUEADO para MEI (NT 2024.001)
       taxRegime: 'simples_nacional',
       cfop: '5.905',
       cstCsosn: '400',
@@ -405,7 +422,7 @@ async function main() {
       originUf: null,
       destinationUf: null,
       operation: 'retorno',
-      purpose: 'deposito',
+      purpose: 'deposito', // ⚠️ BLOQUEADO para MEI (NT 2024.001)
       taxRegime: 'simples_nacional',
       cfop: '5.906',
       cstCsosn: '400',
