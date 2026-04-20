@@ -129,8 +129,43 @@ export default function Home({ user, onNeedPlan, onEmitWithContext }: Props) {
 
   return (
     <div>
+      <GuiaMei isOpen={showGuiaMei} onClose={() => setShowGuiaMei(false)} />
+      {/* Banner NT 2024.001 */}
+      <div style={{
+        background: 'rgba(245,158,11,0.08)',
+        border: '1px solid rgba(245,158,11,0.35)',
+        borderRadius: 10,
+        padding: '12px 16px',
+        marginBottom: 16,
+        display: 'flex',
+        gap: 12,
+        alignItems: 'flex-start',
+      }}>
+        <span style={{ fontSize: 20, flexShrink: 0 }}>⚠️</span>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: 13, marginBottom: 3, color: '#f59e0b' }}>
+            Atualização da NT 2024.001 v1_20
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.5 }}>
+            A partir de 01/04/2025, houve uma restrição nos CFOPs que o MEI pode usar. O motor fiscal
+            do Snap Fisk está configurado de acordo com as regras atualizadas (CSOSN 102/900 conforme operação).{' '}
+            <a href="https://www.nfe.fazenda.gov.br/portal/listaConteudo.aspx?tipoConteudo=04BIflQt1aY=" target="_blank" rel="noreferrer" style={{ color: 'var(--primary-light)', fontSize: 11 }}>Ver NT completa →</a>
+          </div>
+        </div>
+      </div>
+
+
       <div className="card">
-        <div className="card-title">Consultar Motor Fiscal</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <div className="card-title" style={{ margin: 0 }}>🔍 Consultar Motor Fiscal</div>
+          <button
+            className="btn btn-outline btn-sm"
+            onClick={() => setShowGuiaMei(true)}
+            style={{ fontSize: 12, display: 'flex', alignItems: 'center', gap: 5 }}
+          >
+            ⚡ Guia MEI
+          </button>
+        </div>
 
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
           <div className="form-group">
