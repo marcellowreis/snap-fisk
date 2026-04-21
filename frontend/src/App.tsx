@@ -36,7 +36,7 @@ export default function App() {
   const [fiscalContext, setFiscalContext] = useState<FiscalContext | null>(null);
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     if (!token) { setLoading(false); return; }
     api.get('/api/me').then(u => {
       setUser(u);
@@ -44,11 +44,11 @@ export default function App() {
         setFirstAccess(true);
         setTab('company');
       }
-    }).catch(() => localStorage.removeItem('token')).finally(() => setLoading(false));
+    }).catch(() => sessionStorage.removeItem('token')).finally(() => setLoading(false));
   }, []);
 
   const handleLogin = (token: string, userData: User) => {
-    localStorage.setItem('token', token);
+    sessionStorage.setItem('token', token);
     setUser(userData);
     if (!userData.company) {
       setFirstAccess(true);
@@ -57,7 +57,7 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
+    sessionStorage.removeItem('token');
     setUser(null);
     setTab('home');
     setFiscalContext(null);
