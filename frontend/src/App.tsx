@@ -47,12 +47,24 @@ export default function App() {
     }).catch(() => sessionStorage.removeItem('token')).finally(() => setLoading(false));
   }, []);
 
-  const handleLogin = (token: string, userData: User) => {
+  const handleLogin = async (token: string, userData: User) => {
     sessionStorage.setItem('token', token);
-    setUser(userData);
-    if (!userData.company) {
-      setFirstAccess(true);
-      setTab('company');
+    // Busca dados completos com company incluído
+    try {
+      const fullUser = await api.get('/api/me');
+      setUser(fullUser);
+      if (!fullUser.company) {
+        setFirstAccess(true);
+        setTab('company');
+      }
+      // Se tem empresa, vai para home normalmente
+    } catch {
+      // fallback: usa dados básicos do login
+      setUser(userData);
+      if (!userData.company) {
+        setFirstAccess(true);
+        setTab('company');
+      }
     }
   };
 
