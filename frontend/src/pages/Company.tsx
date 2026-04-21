@@ -28,8 +28,6 @@ const formatCep = (v: string) =>
 
 export default function Company({ user, isFirstAccess, onSaved }: Props) {
   // Popup só aparece no primeiro acesso E se nunca emitiu NF pelo Snap Fisk
-  const [showPopup, setShowPopup] = useState(isFirstAccess ?? false);
-  const [jaEmitiu, setJaEmitiu] = useState<boolean | null>(null);
 
   // Dados da empresa
   const [razaoSocial, setRazaoSocial] = useState('');
@@ -57,14 +55,6 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    // Se já emitiu alguma NF pelo Snap Fisk, não mostrar popup
-    if (isFirstAccess) {
-      api.get('/api/invoices').then((invoices: any[]) => {
-        if (invoices && invoices.length > 0) {
-          setShowPopup(false);
-        }
-      }).catch(() => {});
-    }
 
     api.get('/api/company').then(c => {
       if (c) {
@@ -139,18 +129,6 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
     }
   };
 
-  const confirmarPopup = () => {
-    if (jaEmitiu === null) return;
-    if (jaEmitiu) {
-      setSerie('3');
-      setProximaNF(1);
-    } else {
-      setSerie('0');
-      setProximaNF(1);
-    }
-    setShowPopup(false);
-  };
-
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -206,75 +184,6 @@ export default function Company({ user, isFirstAccess, onSaved }: Props) {
   // ─── POP-UP PRIMEIRO ACESSO ───────────────────────────────────────────────
   // Só aparece quando é o primeiro acesso E nunca emitiu NF pelo Snap Fisk
 
-  if (showPopup) {
-    return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh', padding: 24 }}>
-        <div className="card" style={{ maxWidth: 420, width: '100%' }}>
-          <div style={{ textAlign: 'center', marginBottom: 24 }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>📄</div>
-            <div style={{ fontSize: 20, fontWeight: 800, marginBottom: 8 }}>Bem-vindo ao Snap Fisk!</div>
-            <div style={{ fontSize: 14, color: 'var(--text-muted)' }}>
-              Antes de emitir sua primeira NF-e, precisamos saber:
-            </div>
-          </div>
-
-          <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 16, textAlign: 'center' }}>
-            Você já emitiu NF-e por outro sistema antes?
-          </div>
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginBottom: 24 }}>
-            <div
-              onClick={() => setJaEmitiu(false)}
-              style={{
-                border: `2px solid ${jaEmitiu === false ? 'var(--primary)' : 'var(--border)'}`,
-                borderRadius: 10,
-                padding: 16,
-                cursor: 'pointer',
-                background: jaEmitiu === false ? 'rgba(99,102,241,0.1)' : 'var(--bg)',
-              }}
-            >
-              <div style={{ fontWeight: 700 }}>🆕 Não — é minha primeira vez</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
-                Vou começar a numeração do zero
-              </div>
-            </div>
-
-            <div
-              onClick={() => setJaEmitiu(true)}
-              style={{
-                border: `2px solid ${jaEmitiu === true ? 'var(--primary)' : 'var(--border)'}`,
-                borderRadius: 10,
-                padding: 16,
-                cursor: 'pointer',
-                background: jaEmitiu === true ? 'rgba(99,102,241,0.1)' : 'var(--bg)',
-              }}
-            >
-              <div style={{ fontWeight: 700 }}>✅ Sim — já usei Sebrae ou outro emissor</div>
-              <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 4 }}>
-                Vou usar a Série 3 para não conflitar
-              </div>
-            </div>
-          </div>
-
-          {jaEmitiu === true && (
-            <div className="alert alert-warning" style={{ fontSize: 12, marginBottom: 16 }}>
-              ⚠️ A Série 3 é nova e independente das suas NFs anteriores. Suas notas emitidas em outros sistemas continuam válidas normalmente.
-            </div>
-          )}
-
-          <button
-            className="btn btn-primary"
-            onClick={confirmarPopup}
-            disabled={jaEmitiu === null}
-          >
-            Continuar →
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // ─── FORMULÁRIO DA EMPRESA ────────────────────────────────────────────────
 
   return (
     <div>
