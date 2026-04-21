@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { api } from '../api';
 import type { User, FiscalContext } from '../App';
+import GuiaMei from './GuiaMei';
 
 const UFS = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO','EX'];
 
@@ -62,6 +63,7 @@ export default function Home({ user, onNeedPlan, onEmitWithContext }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState('');
+  const [showGuiaMei, setShowGuiaMei] = useState(false);
 
   const taxRegime = company?.taxRegime ?? 'simples_nacional';
 
