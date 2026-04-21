@@ -688,16 +688,30 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
               </div>
             </div>
           </div>
-          {/* Série */}
-          <div style={{
-            background: 'rgba(99,102,241,0.08)',
-            border: '1px solid rgba(99,102,241,0.25)',
-            borderRadius: 10, padding: '10px 16px',
-            textAlign: 'center', minWidth: 80,
-          }}>
-            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>Série</div>
-            <div style={{ fontWeight: 900, fontSize: 22, color: 'var(--primary-light)', lineHeight: 1 }}>{serie}</div>
-            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>NF-e</div>
+          {/* Série + Número */}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <div style={{
+              background: 'rgba(99,102,241,0.08)',
+              border: '1px solid rgba(99,102,241,0.25)',
+              borderRadius: 10, padding: '10px 14px',
+              textAlign: 'center', minWidth: 70,
+            }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>Série</div>
+              <div style={{ fontWeight: 900, fontSize: 22, color: 'var(--primary-light)', lineHeight: 1 }}>{serie}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>NF-e</div>
+            </div>
+            <div style={{
+              background: 'rgba(16,185,129,0.08)',
+              border: '1px solid rgba(16,185,129,0.25)',
+              borderRadius: 10, padding: '10px 14px',
+              textAlign: 'center', minWidth: 70,
+            }}>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>Próx. Nº</div>
+              <div style={{ fontWeight: 900, fontSize: 22, color: '#10b981', lineHeight: 1 }}>
+                {company?.proximaNF ?? 1}
+              </div>
+              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>NF</div>
+            </div>
           </div>
         </div>
       </div>
