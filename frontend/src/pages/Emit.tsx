@@ -72,46 +72,56 @@ type NewCustomer = {
   uf: string;
 };
 
-const OPERATIONS = [
-  { value: 'venda', label: 'Venda' },
-  { value: 'remessa', label: 'Remessa' },
-  { value: 'retorno', label: 'Retorno' },
-  { value: 'devolucao', label: 'Devolução' },
-  { value: 'transferencia', label: 'Transferência' },
-  { value: 'servico', label: 'Prestação de Serviço' },
-];
+// ── Operações e finalidades por tpNF (1=Saída, 0=Entrada) ──────────────
+const OPERATIONS_BY_TPNF: Record<string, { value: string; label: string; icon: string }[]> = {
+  '1': [ // SAÍDA — CFOPs 5xxx, 6xxx, 7xxx
+    { value: 'venda',     label: 'Venda',                   icon: '🛒' },
+    { value: 'remessa',   label: 'Remessa',                 icon: '📦' },
+    { value: 'devolucao', label: 'Devolução ao Fornecedor', icon: '↩️' },
+    { value: 'servico',   label: 'Prestação de Serviço',    icon: '🔧' },
+  ],
+  '0': [ // ENTRADA — CFOPs 1xxx, 2xxx, 3xxx
+    { value: 'compra',     label: 'Compra',              icon: '🏪' },
+    { value: 'retorno',    label: 'Retorno de Remessa',  icon: '🔄' },
+    { value: 'devolucao',  label: 'Devolução de Venda',  icon: '📤' },
+    { value: 'importacao', label: 'Importação',          icon: '🌍' },
+  ],
+};
 
-const PURPOSES: Record<string, { value: string; label: string }[]> = {
-  venda: [
-    { value: 'normal', label: 'Venda para revenda' },
-    { value: 'consumidor_final_pf', label: 'Para consumidor final' },
-    { value: 'substituicao_tributaria', label: 'Com Substituição Tributária' },
-    { value: 'exportacao', label: 'Exportação' },
-  ],
-  venda_entrada: [
-    { value: 'importacao', label: 'Importação' },
-  ],
-  remessa: [
-    { value: 'conserto', label: 'Para conserto' },
-    { value: 'demonstracao', label: 'Para demonstração' },
-    { value: 'industrializacao', label: 'Para industrialização' },
-    { value: 'deposito', label: 'Para depósito' },
-    { value: 'brinde', label: 'Brinde' },
-    { value: 'bonificacao', label: 'Bonificação' },
-    { value: 'exportacao', label: 'Exportação' },
-  ],
-  retorno: [
-    { value: 'conserto', label: 'De conserto' },
-    { value: 'demonstracao', label: 'De demonstração' },
-    { value: 'industrializacao', label: 'De industrialização' },
-    { value: 'deposito', label: 'De depósito' },
-  ],
-  devolucao: [
-    { value: 'compra', label: 'Devolução de compra' },
-    { value: 'venda', label: 'Devolução de venda' },
-  ],
-  transferencia: [{ value: 'normal', label: 'Entre estabelecimentos' }],
-  servico: [{ value: 'normal', label: 'Prestação de serviço' }],
+const PURPOSES_BY_TPNF: Record<string, Record<string, { value: string; label: string }[]>> = {
+  '1': { // SAÍDA
+    venda: [
+      { value: 'normal',                  label: 'Para revenda (empresa)' },
+      { value: 'consumidor_final_pf',     label: 'Para consumidor final (PF)' },
+      { value: 'substituicao_tributaria', label: 'Com Substituição Tributária' },
+      { value: 'exportacao',              label: 'Exportação' },
+    ],
+    remessa: [
+      { value: 'normal',     label: 'Para venda fora do estabelecimento' },
+      { value: 'exportacao', label: 'Com fim específico de exportação' },
+    ],
+    devolucao: [
+      { value: 'venda', label: 'Devolução de compra ao fornecedor' },
+    ],
+    servico: [
+      { value: 'normal', label: 'Prestação de serviço (ISSQN)' },
+    ],
+  },
+  '0': { // ENTRADA
+    compra: [
+      { value: 'normal',                  label: 'Compra para comercialização' },
+      { value: 'substituicao_tributaria', label: 'Compra com Substituição Tributária' },
+    ],
+    retorno: [
+      { value: 'normal', label: 'Retorno de remessa para venda' },
+    ],
+    devolucao: [
+      { value: 'venda', label: 'Devolução recebida do cliente' },
+    ],
+    importacao: [
+      { value: 'importacao', label: 'Importação do exterior' },
+    ],
+  },
 };
 
 const UNIDADES = ['PC', 'UN', 'KG', 'MT', 'LT', 'CX', 'PAR', 'JG', 'SC', 'M2'];
@@ -257,11 +267,19 @@ export default function Emit({ user, fiscalContext, onBack }: Props) {
   useEffect(() => {
     if (!operation || !purpose || !company) return;
     setLoadingFiscal(true);
+    // Mapeia operações de entrada para o motor fiscal
+    const opMapped = tpNF === '0' && operation === 'compra' ? 'venda'
+      : tpNF === '0' && operation === 'importacao' ? 'venda'
+      : operation;
+    const purMapped = tpNF === '0' && operation === 'importacao' ? 'importacao'
+      : tpNF === '0' && operation === 'retorno' ? 'normal'
+      : tpNF === '0' && operation === 'devolucao' ? 'venda'
+      : purpose;
     api.post('/api/fiscal-engine/query', {
       originUf: company.uf || 'SP',
       destinationUf: selectedCustomer?.uf || company.uf || 'SP',
-      operation,
-      purpose,
+      operation: opMapped,
+      purpose: purMapped,
       taxRegime: company.taxRegime || 'simples_nacional',
     }).then(data => {
       setFiscalResult(data);
@@ -886,7 +904,9 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
           <label className="form-label">Tipo de Operação</label>
           <select className="form-select" value={operation} onChange={e => { setOperation(e.target.value); setPurpose(''); setFiscalResult(null); }}>
             <option value="">Selecione...</option>
-            {OPERATIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+            {(OPERATIONS_BY_TPNF[tpNF] ?? []).map(o => (
+              <option key={o.value} value={o.value}>{o.icon} {o.label}</option>
+            ))}
           </select>
         </div>
         {operation && (
@@ -895,8 +915,7 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
             <select className="form-select" value={purpose} onChange={e => setPurpose(e.target.value)}>
               <option value="">Selecione...</option>
               {([
-                ...(PURPOSES[operation] || []),
-                ...(tpNF === '0' && operation === 'venda' ? (PURPOSES['venda_entrada'] || []) : []),
+                ...(PURPOSES_BY_TPNF[tpNF]?.[operation] ?? []),
               ]).map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
             </select>
           </div>
