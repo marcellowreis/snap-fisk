@@ -26,6 +26,8 @@ export type FiscalContext = {
   naturezaOperacao: string;
   informacoesComplementares: string;
   mensagemAlerta: string;
+  tpNF: '0' | '1';
+  serie: string;
 };
 
 export default function App() {
