@@ -195,7 +195,8 @@ export default function Emit({ user, fiscalContext, onBack }: Props) {
   const [savingCustomer, setSavingCustomer] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
 
-  const [tpNF, setTpNF] = useState<'0' | '1'>('1');
+  const [tpNF, setTpNF] = useState<'0' | '1'>(fiscalContext?.tpNF ?? '1');
+  const serie = fiscalContext?.serie ?? '1';
   const [operation, setOperation] = useState(fiscalContext?.operation ?? '');
   const [purpose, setPurpose] = useState(fiscalContext?.purpose ?? '');
   const [fiscalResult, setFiscalResult] = useState<FiscalResult | null>(
@@ -666,13 +667,38 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
 
   return (
     <div>
-      {/* TIPO DA NF */}
-      <div className="card">
-        <div className="card-title">Tipo da Nota</div>
-        <div style={{ display: 'flex', gap: 8 }}>
-          {[{ v: '1', l: '📤 Saída' }, { v: '0', l: '📥 Entrada' }].map(t => (
-            <button key={t.v} className={`btn ${tpNF === t.v ? 'btn-primary' : 'btn-outline'}`} style={{ flex: 1 }} onClick={() => setTpNF(t.v as '0' | '1')}>{t.l}</button>
-          ))}
+      {/* TIPO DA NF — informativo, definido na tela anterior */}
+      <div className="card" style={{ padding: '12px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* Tipo */}
+          <div style={{
+            flex: 1,
+            background: tpNF === '1' ? 'rgba(99,102,241,0.12)' : 'rgba(16,185,129,0.1)',
+            border: `1px solid ${tpNF === '1' ? 'rgba(99,102,241,0.4)' : 'rgba(16,185,129,0.3)'}`,
+            borderRadius: 10, padding: '10px 14px',
+            display: 'flex', alignItems: 'center', gap: 10,
+          }}>
+            <span style={{ fontSize: 22 }}>{tpNF === '1' ? '📤' : '📥'}</span>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 14, color: tpNF === '1' ? 'var(--primary-light)' : '#10b981' }}>
+                NF-e de {tpNF === '1' ? 'Saída' : 'Entrada'}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-muted)' }}>
+                tpNF={tpNF} · {tpNF === '1' ? 'Venda, remessa, serviço' : 'Compra, retorno, devolução'}
+              </div>
+            </div>
+          </div>
+          {/* Série */}
+          <div style={{
+            background: 'rgba(99,102,241,0.08)',
+            border: '1px solid rgba(99,102,241,0.25)',
+            borderRadius: 10, padding: '10px 16px',
+            textAlign: 'center', minWidth: 80,
+          }}>
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginBottom: 2 }}>Série</div>
+            <div style={{ fontWeight: 900, fontSize: 22, color: 'var(--primary-light)', lineHeight: 1 }}>{serie}</div>
+            <div style={{ fontSize: 10, color: 'var(--text-muted)', marginTop: 2 }}>NF-e</div>
+          </div>
         </div>
       </div>
 
