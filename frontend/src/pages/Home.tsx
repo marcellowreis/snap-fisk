@@ -5,46 +5,64 @@ import GuiaMei from './GuiaMei';
 
 const UFS = ['AC','AL','AM','AP','BA','CE','DF','ES','GO','MA','MG','MS','MT','PA','PB','PE','PI','PR','RJ','RN','RO','RR','RS','SC','SE','SP','TO','EX'];
 
-const OPERATIONS = [
-  { value: 'venda', label: 'Venda' },
-  { value: 'remessa', label: 'Remessa' },
-  { value: 'retorno', label: 'Retorno' },
-  { value: 'devolucao', label: 'Devolução' },
-  { value: 'transferencia', label: 'Transferência' },
-  { value: 'servico', label: 'Prestação de Serviço' },
-];
+// ── Operações por tipo de NF ─────────────────────────────────────────────
+// tpNF: '1' = Saída (série 1), '0' = Entrada (série 2)
+const OPERATIONS_BY_TIPO: Record<string, { value: string; label: string; icon: string }[]> = {
+  '1': [ // SAÍDA
+    { value: 'venda',         label: 'Venda',               icon: '🛒' },
+    { value: 'remessa',       label: 'Remessa',              icon: '📦' },
+    { value: 'devolucao',     label: 'Devolução ao Fornecedor', icon: '↩️' },
+    { value: 'servico',       label: 'Prestação de Serviço', icon: '🔧' },
+  ],
+  '0': [ // ENTRADA
+    { value: 'compra',        label: 'Compra',               icon: '🏪' },
+    { value: 'retorno',       label: 'Retorno de Remessa',   icon: '🔄' },
+    { value: 'devolucao',     label: 'Devolução de Venda',   icon: '📤' },
+    { value: 'importacao',    label: 'Importação',           icon: '🌍' },
+  ],
+};
 
-const PURPOSES: Record<string, { value: string; label: string }[]> = {
-  venda: [
-    { value: 'normal', label: 'Venda para revenda' },
-    { value: 'consumidor_final_pf', label: 'Para consumidor final' },
-    { value: 'substituicao_tributaria', label: 'Com Substituição Tributária' },
-    { value: 'exportacao', label: 'Exportação' },
-  ],
-  venda_entrada: [
-    { value: 'importacao', label: 'Importação' },
-  ],
-  remessa: [
-    { value: 'conserto', label: 'Para conserto' },
-    { value: 'demonstracao', label: 'Para demonstração' },
-    { value: 'industrializacao', label: 'Para industrialização' },
-    { value: 'deposito', label: 'Para depósito' },
-    { value: 'brinde', label: 'Brinde' },
-    { value: 'bonificacao', label: 'Bonificação' },
-    { value: 'exportacao', label: 'Exportação' },
-  ],
-  retorno: [
-    { value: 'conserto', label: 'De conserto' },
-    { value: 'demonstracao', label: 'De demonstração' },
-    { value: 'industrializacao', label: 'De industrialização' },
-    { value: 'deposito', label: 'De depósito' },
-  ],
-  devolucao: [
-    { value: 'compra', label: 'Devolução de compra' },
-    { value: 'venda', label: 'Devolução de venda' },
-  ],
-  transferencia: [{ value: 'normal', label: 'Entre estabelecimentos' }],
-  servico: [{ value: 'normal', label: 'Prestação de serviço' }],
+const PURPOSES_BY_TIPO: Record<string, Record<string, { value: string; label: string }[]>> = {
+  '1': { // SAÍDA
+    venda: [
+      { value: 'normal',                label: 'Para revenda (empresa)' },
+      { value: 'consumidor_final_pf',   label: 'Para consumidor final (PF)' },
+      { value: 'substituicao_tributaria', label: 'Com Substituição Tributária' },
+      { value: 'exportacao',            label: 'Exportação' },
+    ],
+    remessa: [
+      { value: 'normal',                label: 'Para venda fora do estabelecimento' },
+      { value: 'exportacao',            label: 'Com fim específico de exportação' },
+    ],
+    devolucao: [
+      { value: 'venda',                 label: 'Devolução de compra ao fornecedor' },
+    ],
+    servico: [
+      { value: 'normal',                label: 'Prestação de serviço (ISSQN)' },
+    ],
+  },
+  '0': { // ENTRADA
+    compra: [
+      { value: 'normal',                label: 'Compra para comercialização' },
+      { value: 'substituicao_tributaria', label: 'Compra com Substituição Tributária' },
+    ],
+    retorno: [
+      { value: 'normal',                label: 'Retorno de remessa para venda' },
+    ],
+    devolucao: [
+      { value: 'venda',                 label: 'Devolução recebida do cliente' },
+    ],
+    importacao: [
+      { value: 'importacao',            label: 'Importação do exterior' },
+    ],
+  },
+};
+
+// Série por tipo de NF (padrão MEI)
+// Saída → série 1 | Entrada → série 2
+const SERIE_BY_TIPO: Record<string, string> = {
+  '1': '1', // Saída
+  '0': '2', // Entrada
 };
 
 type Props = {
@@ -57,8 +75,19 @@ export default function Home({ user, onNeedPlan, onEmitWithContext }: Props) {
   const company = user.company;
   const [originUf, setOriginUf] = useState(company?.uf ?? 'SP');
   const [destinationUf, setDestinationUf] = useState(company?.uf ?? 'SP');
+  const [tpNF, setTpNF] = useState<'1' | '0'>('1'); // '1'=Saída '0'=Entrada
   const [operation, setOperation] = useState('');
   const [purpose, setPurpose] = useState('');
+  // Pergunta sobre emissor anterior — só aparece se série ainda não foi definida
+  const [jaEmitiu, setJaEmitiu] = useState<boolean | null>(null);
+  const [serieConfirmada, setSerieConfirmada] = useState(false);
+
+  // Série já definida = company.serie existe e não é '0'
+  const serieJaDefinida = !!(company?.serie && company.serie !== '0');
+  // Série atual baseada no tpNF
+  const serieAtual = tpNF === '1'
+    ? (company?.serie && company.serie !== '0' ? company.serie : '1')
+    : '2';
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -73,6 +102,31 @@ export default function Home({ user, onNeedPlan, onEmitWithContext }: Props) {
     if (originUf === 'EX') return '🌍 Importação';
     if (originUf !== destinationUf) return '🔀 Interestadual';
     return '📍 Intraestadual';
+  };
+
+  const handleTpNF = (tipo: '1' | '0') => {
+    setTpNF(tipo);
+    setOperation('');
+    setPurpose('');
+    setResult(null);
+    setError('');
+  };
+
+  const confirmarEmissor = async () => {
+    if (jaEmitiu === null) return;
+    const novaSerie = jaEmitiu ? '3' : '1';
+    try {
+      await api.post('/api/company', {
+        ...company,
+        serie: novaSerie,
+        proximaNF: 1,
+      });
+      setSerieConfirmada(true);
+      // Atualiza company no user
+      if (company) company.serie = novaSerie;
+    } catch (e) {
+      console.error('Erro ao salvar série:', e);
+    }
   };
 
   const handleOperation = (op: string) => {
@@ -90,9 +144,10 @@ export default function Home({ user, onNeedPlan, onEmitWithContext }: Props) {
       const data = await api.post('/api/fiscal-engine/query', {
         originUf,
         destinationUf,
-        operation,
-        purpose,
+        operation: tpNF === '0' && operation === 'compra' ? 'venda' : operation,
+        purpose: tpNF === '0' && operation === 'importacao' ? 'importacao' : purpose,
         taxRegime,
+        tpNF,
       });
       setResult(data);
     } catch (e: any) {
@@ -208,6 +263,107 @@ export default function Home({ user, onNeedPlan, onEmitWithContext }: Props) {
         </div>
 
         <div className="form-group">
+          {/* Tipo de NF — Entrada ou Saída */}
+          <div style={{ marginBottom: 16 }}>
+            <label className="form-label">Tipo de Nota Fiscal</label>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {([
+                { tipo: '1', label: '↑ Saída',  desc: 'Venda, remessa, serviço', serie: 'Série 1' },
+                { tipo: '0', label: '↓ Entrada', desc: 'Compra, retorno, devolução', serie: 'Série 2' },
+              ] as const).map(t => (
+                <button
+                  key={t.tipo}
+                  onClick={() => handleTpNF(t.tipo)}
+                  style={{
+                    flex: 1, padding: '12px 10px',
+                    borderRadius: 10,
+                    border: `2px solid ${tpNF === t.tipo ? 'var(--primary)' : 'var(--border)'}`,
+                    background: tpNF === t.tipo ? 'rgba(99,102,241,0.12)' : 'var(--bg)',
+                    cursor: 'pointer', textAlign: 'center',
+                    transition: 'all 0.15s',
+                  }}
+                >
+                  <div style={{ fontWeight: 800, fontSize: 15, color: tpNF === t.tipo ? 'var(--primary-light)' : 'var(--text)' }}>
+                    {t.label}
+                  </div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>{t.desc}</div>
+                  <div style={{
+                    fontSize: 10, fontWeight: 700, marginTop: 4,
+                    color: tpNF === t.tipo ? 'var(--primary-light)' : 'var(--text-muted)',
+                    background: tpNF === t.tipo ? 'rgba(99,102,241,0.15)' : 'rgba(255,255,255,0.05)',
+                    borderRadius: 4, padding: '2px 6px', display: 'inline-block',
+                  }}>
+                    {t.serie}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Pergunta sobre emissor anterior — só na primeira vez ── */}
+          {!serieJaDefinida && !serieConfirmada && (
+            <div style={{
+              background: 'rgba(99,102,241,0.08)',
+              border: '1px solid rgba(99,102,241,0.3)',
+              borderRadius: 12,
+              padding: 16,
+              marginBottom: 4,
+            }}>
+              <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 12 }}>
+                📋 Já emitiu NF-e por outro sistema antes?
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginBottom: 14 }}>
+                <div
+                  onClick={() => setJaEmitiu(false)}
+                  style={{
+                    border: `2px solid ${jaEmitiu === false ? 'var(--primary)' : 'var(--border)'}`,
+                    borderRadius: 8, padding: '10px 14px', cursor: 'pointer',
+                    background: jaEmitiu === false ? 'rgba(99,102,241,0.12)' : 'var(--bg)',
+                  }}
+                >
+                  <div style={{ fontWeight: 700, fontSize: 13 }}>🆕 Não — primeira vez</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                    Numeração começa do zero · Série 1 (Saída) / Série 2 (Entrada)
+                  </div>
+                </div>
+                <div
+                  onClick={() => setJaEmitiu(true)}
+                  style={{
+                    border: `2px solid ${jaEmitiu === true ? 'var(--primary)' : 'var(--border)'}`,
+                    borderRadius: 8, padding: '10px 14px', cursor: 'pointer',
+                    background: jaEmitiu === true ? 'rgba(99,102,241,0.12)' : 'var(--bg)',
+                  }}
+                >
+                  <div style={{ fontWeight: 700, fontSize: 13 }}>✅ Sim — Sebrae, outro sistema</div>
+                  <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+                    Usaremos Série 3 para não conflitar com suas NFs anteriores
+                  </div>
+                </div>
+              </div>
+              {jaEmitiu === true && (
+                <div style={{
+                  fontSize: 12, color: '#f59e0b',
+                  background: 'rgba(245,158,11,0.08)',
+                  border: '1px solid rgba(245,158,11,0.25)',
+                  borderRadius: 6, padding: '8px 12px', marginBottom: 12,
+                }}>
+                  ⚠️ A Série 3 é independente das suas NFs anteriores. Suas notas emitidas em outros sistemas continuam válidas.
+                </div>
+              )}
+              <button
+                className="btn btn-primary"
+                onClick={confirmarEmissor}
+                disabled={jaEmitiu === null}
+                style={{ width: '100%', fontSize: 13 }}
+              >
+                Confirmar e continuar →
+              </button>
+            </div>
+          )}
+
+          {/* Só mostra operação se série já definida ou confirmada agora */}
+          {(serieJaDefinida || serieConfirmada) && (
+            <>
           <label className="form-label">Tipo de Operação</label>
           <select className="form-select" value={operation} onChange={e => handleOperation(e.target.value)}>
             <option value="">Selecione...</option>
