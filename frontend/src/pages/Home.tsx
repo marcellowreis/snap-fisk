@@ -165,6 +165,8 @@ export default function Home({ user, onNeedPlan, onEmitWithContext }: Props) {
       naturezaOperacao: result.naturezaOperacao || '',
       informacoesComplementares: result.informacoesComplementares || '',
       mensagemAlerta: result.mensagemAlerta || '',
+      tpNF,
+      serie: serieAtual,
     });
   };
 
