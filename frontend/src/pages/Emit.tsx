@@ -282,13 +282,22 @@ export default function Emit({ user, fiscalContext, onBack }: Props) {
       purpose: purMapped,
       taxRegime: company.taxRegime || 'simples_nacional',
     }).then(data => {
-      setFiscalResult(data);
-      if (data.cfop) {
-        setItems(prev => prev.map(i => ({ ...i, cfop: data.cfop, csosn: data.cstCsosn || '102' })));
+      // Ajusta o CFOP exibido conforme tpNF
+      const cfopExibido = tpNF === '0' && data.cfopEntradaVinculado
+        ? data.cfopEntradaVinculado
+        : data.cfop;
+      setFiscalResult({ ...data, cfop: cfopExibido });
+      // tpNF=0 (Entrada) → usa cfopEntradaVinculado (1xxx/2xxx/3xxx)
+      // tpNF=1 (Saída)  → usa cfop principal (5xxx/6xxx/7xxx)
+      const cfopParaUsar = tpNF === '0' && data.cfopEntradaVinculado
+        ? data.cfopEntradaVinculado
+        : data.cfop;
+      if (cfopParaUsar) {
+        setItems(prev => prev.map(i => ({ ...i, cfop: cfopParaUsar, csosn: data.cstCsosn || '102' })));
       }
     }).catch(() => setFiscalResult(null))
       .finally(() => setLoadingFiscal(false));
-  }, [operation, purpose, selectedCustomer]);
+  }, [operation, purpose, selectedCustomer, tpNF]);
 
   // ─── BUSCA CNPJ ────────────────────────────────────────────────────────────
 
@@ -553,7 +562,7 @@ _Emitida pelo Snap Fisk — snapfisk.com.br_`;
   };
 
   const downloadXml = async (id: string, numero: number) => {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
     const res = await fetch(`/api/invoices/${id}/xml`, { headers: { Authorization: `Bearer ${token}` } });
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
