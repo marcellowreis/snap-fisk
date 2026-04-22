@@ -51,108 +51,46 @@ export default function App() {
 
   const handleLogin = async (token: string, userData: User) => {
     sessionStorage.setItem('token', token);
-    // Busca dados completos com company incluído
     try {
       const fullUser = await api.get('/api/me');
       setUser(fullUser);
-      if (!fullUser.company) {
-        setFirstAccess(true);
-        setTab('company');
-      }
-      // Se tem empresa, vai para home normalmente
+      if (!fullUser.company) { setFirstAccess(true); setTab('company'); }
     } catch {
-      // fallback: usa dados básicos do login
       setUser(userData);
-      if (!userData.company) {
-        setFirstAccess(true);
-        setTab('company');
-      }
+      if (!userData.company) { setFirstAccess(true); setTab('company'); }
     }
   };
 
   const handleLogout = () => {
     sessionStorage.removeItem('token');
-    setUser(null);
-    setTab('home');
-    setFiscalContext(null);
+    setUser(null); setTab('home'); setFiscalContext(null);
   };
 
-  const handleEmitWithContext = (ctx: FiscalContext) => {
-    setFiscalContext(ctx);
-    setTab('emit');
-  };
+  const handleEmitWithContext = (ctx: FiscalContext) => { setFiscalContext(ctx); setTab('emit'); };
 
-  if (loading) return (
-    <div className="auth-page">
-      <div className="auth-logo">Snap Fisk</div>
-      <div className="spinner" />
-    </div>
-  );
-
+  if (loading) return (<div className="auth-page"><div className="auth-logo">Snap Fisk</div><div className="spinner" /></div>);
   if (!user) return <Auth onLogin={handleLogin} />;
 
   return (
     <div className="app">
       <header className="header">
-        <div>
-          <div className="header-logo">Snap Fisk</div>
-          <div className="header-sub">{user.company?.razaoSocial || user.cnpj}</div>
-        </div>
+        <div><div className="header-logo">Snap Fisk</div><div className="header-sub">{user.company?.razaoSocial || user.cnpj}</div></div>
         <button className="btn btn-outline btn-sm" onClick={handleLogout}>Sair</button>
       </header>
-
       <main className="page">
-        {tab === 'home' && (
-          <Home
-            user={user}
-            onNeedPlan={() => setTab('plans')}
-            onEmitWithContext={handleEmitWithContext}
-          />
-        )}
-        {tab === 'emit' && (
-          <Emit
-            user={user}
-            fiscalContext={fiscalContext}
-            onBack={() => { setTab('home'); setFiscalContext(null); }}
-          />
-        )}
+        {tab === 'home' && <Home user={user} onNeedPlan={() => setTab('plans')} onEmitWithContext={handleEmitWithContext} />}
+        {tab === 'emit' && <Emit user={user} fiscalContext={fiscalContext} onBack={() => { setTab('home'); setFiscalContext(null); }} />}
         {tab === 'history' && <History user={user} />}
         {tab === 'plans' && <Plans user={user} onSuccess={() => setTab('home')} />}
         {tab === 'cfop' && <Cfop />}
-        {tab === 'company' && (
-          <Company
-            user={user}
-            isFirstAccess={firstAccess}
-            onSaved={company => {
-              setUser(prev => prev ? { ...prev, company } : prev);
-              setFirstAccess(false);
-              setTab('home');
-            }}
-          />
-        )}
+        {tab === 'company' && <Company user={user} isFirstAccess={firstAccess} onSaved={company => { setUser(prev => prev ? { ...prev, company } : prev); setFirstAccess(false); setTab('home'); }} />}
       </main>
-
       <nav className="bottom-nav">
-        <button className={`nav-item ${tab === 'home' ? 'active' : ''}`} onClick={() => setTab('home')}>
-          <span className="nav-icon">🔍</span>
-          Consultar
-        </button>
-        <button className={`nav-item ${tab === 'cfop' ? 'active' : ''}`} onClick={() => setTab('cfop')}>
-          <span className="nav-icon">📋</span>
-          CFOP
-        </button>
-        <button className={`nav-item ${tab === 'history' ? 'active' : ''}`} onClick={() => setTab('history')}>
-          <span className="nav-icon">📂</span>
-          Histórico
-        </button>
-        <button className={`nav-item ${tab === 'plans' ? 'active' : ''}`} onClick={() => setTab('plans')}>
-          <span className="nav-icon">💳</span>
-          Planos
-        </button>
-        <button className={`nav-item ${tab === 'company' ? 'active' : ''}`} onClick={() => setTab('company')}>
-          <span className="nav-icon">🏢</span>
-          Empresa
-        </button>
+        <button className={`nav-item ${tab === 'home' ? 'active' : ''}`} onClick={() => setTab('home')}><span className="nav-icon">🔍</span>Consultar</button>
+        <button className={`nav-item ${tab === 'cfop' ? 'active' : ''}`} onClick={() => setTab('cfop')}><span className="nav-icon">📋</span>CFOP</button>
+        <button className={`nav-item ${tab === 'history' ? 'active' : ''}`} onClick={() => setTab('history')}><span className="nav-icon">📂</span>Histórico</button>
+        <button className={`nav-item ${tab === 'plans' ? 'active' : ''}`} onClick={() => setTab('plans')}><span className="nav-icon">💳</span>Planos</button>
+        <button className={`nav-item ${tab === 'company' ? 'active' : ''}`} onClick={() => setTab('company')}><span className="nav-icon">🏢</span>Empresa</button>
       </nav>
     </div>
   );
