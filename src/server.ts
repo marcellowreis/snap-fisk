@@ -752,7 +752,38 @@ app.delete('/api/customers/:id', authenticate, async (req, res) => {
 app.post('/api/fiscal-engine/query', authenticate, async (req, res) => {
   const p = fiscalQuerySchema.safeParse(req.body);
   if (!p.success) return res.status(400).json({ error: 'Payload inválido.', details: p.error.flatten() });
-  const result = await resolveFiscalRule(p.data, req.userId);
+
+  // ── Mapeia operações de ENTRADA para equivalentes no motor fiscal ──
+  // NF-e de Entrada (tpNF=0): compra→venda, retorno→remessa(retorno), importacao→venda(importacao)
+  let operation = p.data.operation;
+  let purpose   = p.data.purpose;
+
+  if (p.data.tpNF === '0') {
+    if (operation === 'compra') {
+      operation = 'venda';
+      // mantém purpose (normal, substituicao_tributaria)
+    } else if (operation === 'retorno') {
+      operation = 'remessa';
+      purpose   = 'normal'; // retorno de remessa p/ venda → 1.904/2.904
+    } else if (operation === 'importacao') {
+      operation = 'venda';
+      purpose   = 'importacao';
+    } else if (operation === 'devolucao') {
+      operation = 'devolucao';
+      purpose   = 'venda'; // devolução recebida do cliente → 1.202/2.202
+    }
+  }
+
+  const result = await resolveFiscalRule({ ...p.data, operation, purpose }, req.userId);
+
+  // Se NF de Entrada (tpNF=0), retorna o CFOP de entrada vinculado no lugar do CFOP de saída
+  if (p.data.tpNF === '0' && result.cfopEntradaVinculado) {
+    return res.json({
+      ...result,
+      cfop: result.cfopEntradaVinculado,
+    });
+  }
+
   return res.json(result);
 });
 
