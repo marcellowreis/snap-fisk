@@ -1,4 +1,4 @@
-import 'dotenv/config';
+import 'dotenv/config'; // deploy 2026-04-24T18:36
 import express from 'express';
 import path from 'path';
 import { z } from 'zod';
@@ -18,16 +18,16 @@ let ncmTable: Array<{ c: string; d: string }> = [];
 try {
   const ncmPath = path.join(process.cwd(), 'ncm_table.json');
   ncmTable = JSON.parse(fs.readFileSync(ncmPath, 'utf-8'));
-  console.log(`✅ Tabela NCM carregada: ${ncmTable.length} códigos`);
+  console.log(`â Tabela NCM carregada: ${ncmTable.length} cÃ³digos`);
 } catch {
-  console.warn('⚠️ ncm_table.json não encontrado — busca NCM desabilitada');
+  console.warn('â ï¸ ncm_table.json nÃ£o encontrado â busca NCM desabilitada');
 }
 
 // Servir frontend
 const frontendDist = path.join(process.cwd(), 'frontend', 'dist');
 app.use(express.static(frontendDist));
 
-// ─── TIPOS ──────────────────────────────────────────────────────────────────
+// âââ TIPOS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 declare global {
   namespace Express {
@@ -37,7 +37,7 @@ declare global {
   }
 }
 
-// ─── MIDDLEWARE DE AUTENTICAÇÃO ──────────────────────────────────────────────
+// âââ MIDDLEWARE DE AUTENTICAÃÃO ââââââââââââââââââââââââââââââââââââââââââââââ
 
 const authenticate = (
   req: express.Request,
@@ -46,7 +46,7 @@ const authenticate = (
 ) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Token não informado.' });
+    return res.status(401).json({ error: 'Token nÃ£o informado.' });
   }
   const token = authHeader.split(' ')[1];
   try {
@@ -54,11 +54,11 @@ const authenticate = (
     req.userId = payload.userId;
     next();
   } catch {
-    return res.status(401).json({ error: 'Token inválido ou expirado.' });
+    return res.status(401).json({ error: 'Token invÃ¡lido ou expirado.' });
   }
 };
 
-// ─── SCHEMAS ────────────────────────────────────────────────────────────────
+// âââ SCHEMAS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 const registerSchema = z.object({
   cnpj: z.string().min(14).max(18),
@@ -113,7 +113,7 @@ const customerSchema = z.object({
   nome: z.string().min(1),
   ie: z.string().optional(),
   indIEDest: z.string().default('9'),
-  email: z.string().email({ message: 'E-mail inválido.' }),
+  email: z.string().email({ message: 'E-mail invÃ¡lido.' }),
   fone: z.string().optional(),
   cep: z.string().optional(),
   logradouro: z.string().optional(),
@@ -166,17 +166,17 @@ const fiscalQuerySchema = z.object({
   taxRegime: z.string().min(1),
 });
 
-// ─── HELPERS ────────────────────────────────────────────────────────────────
+// âââ HELPERS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 const cleanDoc = (doc: string) => doc.replace(/\D/g, '');
 
-// Sugestão de NCM baseada na descrição do produto
+// SugestÃ£o de NCM baseada na descriÃ§Ã£o do produto
 const suggestNcm = (descricao: string): { ncm: string; descricao: string } | null => {
   const d = descricao.toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // remove acentos
   const suggestions: Array<{ keywords: string[]; ncm: string; descricao: string }> = [
-    // Veículos e autopeças
-    { keywords: ['farol', 'lanterna', 'luz dianteira', 'pisca'], ncm: '85122011', descricao: 'Faróis e projetores' },
+    // VeÃ­culos e autopeÃ§as
+    { keywords: ['farol', 'lanterna', 'luz dianteira', 'pisca'], ncm: '85122011', descricao: 'FarÃ³is e projetores' },
     { keywords: ['retrovisor', 'espelho retrovisor'], ncm: '70091000', descricao: 'Espelhos retrovisores' },
     { keywords: ['para-choque', 'parachoque'], ncm: '87087010', descricao: 'Para-choques' },
     { keywords: ['pneu', 'camara de ar'], ncm: '40112000', descricao: 'Pneus de borracha' },
@@ -186,82 +186,82 @@ const suggestNcm = (descricao: string): { ncm: string; descricao: string } | nul
     { keywords: ['filtro de oleo', 'filtro de ar', 'filtro de combustivel', 'filtro'], ncm: '84212300', descricao: 'Filtros' },
     { keywords: ['amortecedor', 'mola', 'suspensao'], ncm: '87088000', descricao: 'Amortecedores' },
     { keywords: ['correia', 'correia dentada', 'correia alternador'], ncm: '40103990', descricao: 'Correias' },
-    { keywords: ['vela', 'vela de ignicao', 'vela de ignição'], ncm: '85111000', descricao: 'Velas de ignição' },
+    { keywords: ['vela', 'vela de ignicao', 'vela de igniÃ§Ã£o'], ncm: '85111000', descricao: 'Velas de igniÃ§Ã£o' },
     { keywords: ['radiador', 'resfriamento'], ncm: '87089100', descricao: 'Radiadores' },
     { keywords: ['rolamento', 'cubo de roda'], ncm: '84821010', descricao: 'Rolamentos' },
     { keywords: ['escapamento', 'silencioso', 'cano de escapamento'], ncm: '87089200', descricao: 'Silenciosos e tubos de escape' },
     { keywords: ['embreagem', 'disco de embreagem'], ncm: '87083100', descricao: 'Embreagens' },
-    // Roupas e calçados
+    // Roupas e calÃ§ados
     { keywords: ['camiseta', 'camisa', 'blusa', 'regata'], ncm: '61091000', descricao: 'Camisetas de malha' },
-    { keywords: ['calca', 'bermuda', 'short', 'jeans'], ncm: '62034200', descricao: 'Calças de algodão' },
+    { keywords: ['calca', 'bermuda', 'short', 'jeans'], ncm: '62034200', descricao: 'CalÃ§as de algodÃ£o' },
     { keywords: ['vestido', 'saia'], ncm: '61044200', descricao: 'Vestidos de malha' },
     { keywords: ['casaco', 'jaqueta', 'sobretudo', 'moletom'], ncm: '61011000', descricao: 'Casacos e jaquetas' },
     { keywords: ['meia', 'meias'], ncm: '61152200', descricao: 'Meias' },
-    { keywords: ['roupa intima', 'calcinha', 'cueca', 'sutica'], ncm: '61082200', descricao: 'Roupas íntimas' },
-    { keywords: ['sapato', 'tenis', 'calcado', 'chinelo', 'sandalia', 'bota'], ncm: '64041100', descricao: 'Calçados' },
-    // Eletrônicos
-    { keywords: ['notebook', 'computador', 'laptop'], ncm: '84713012', descricao: 'Computadores portáteis' },
-    { keywords: ['celular', 'smartphone', 'iphone', 'android'], ncm: '85171231', descricao: 'Aparelhos telefônicos' },
+    { keywords: ['roupa intima', 'calcinha', 'cueca', 'sutica'], ncm: '61082200', descricao: 'Roupas Ã­ntimas' },
+    { keywords: ['sapato', 'tenis', 'calcado', 'chinelo', 'sandalia', 'bota'], ncm: '64041100', descricao: 'CalÃ§ados' },
+    // EletrÃ´nicos
+    { keywords: ['notebook', 'computador', 'laptop'], ncm: '84713012', descricao: 'Computadores portÃ¡teis' },
+    { keywords: ['celular', 'smartphone', 'iphone', 'android'], ncm: '85171231', descricao: 'Aparelhos telefÃ´nicos' },
     { keywords: ['tablet', 'ipad'], ncm: '84713019', descricao: 'Tablets' },
-    { keywords: ['televisao', 'tv', 'televisor'], ncm: '85287210', descricao: 'Aparelhos receptores de televisão' },
+    { keywords: ['televisao', 'tv', 'televisor'], ncm: '85287210', descricao: 'Aparelhos receptores de televisÃ£o' },
     { keywords: ['monitor', 'tela'], ncm: '85285200', descricao: 'Monitores' },
     { keywords: ['impressora'], ncm: '84433200', descricao: 'Impressoras' },
     { keywords: ['teclado', 'mouse', 'periferico'], ncm: '84716000', descricao: 'Teclados e mouses' },
     { keywords: ['fone', 'headphone', 'headset', 'auricular'], ncm: '85183000', descricao: 'Fones de ouvido' },
-    { keywords: ['camera', 'webcam', 'fotografica'], ncm: '85258090', descricao: 'Câmeras' },
-    { keywords: ['pendrive', 'usb', 'memoria flash'], ncm: '84717012', descricao: 'Memórias flash' },
+    { keywords: ['camera', 'webcam', 'fotografica'], ncm: '85258090', descricao: 'CÃ¢meras' },
+    { keywords: ['pendrive', 'usb', 'memoria flash'], ncm: '84717012', descricao: 'MemÃ³rias flash' },
     { keywords: ['hd', 'ssd', 'disco rigido'], ncm: '84717090', descricao: 'Unidades de disco' },
-    // Eletrodomésticos
+    // EletrodomÃ©sticos
     { keywords: ['geladeira', 'refrigerador', 'freezer'], ncm: '84181021', descricao: 'Refrigeradores' },
-    { keywords: ['maquina de lavar', 'lavadora', 'lava e seca'], ncm: '84501110', descricao: 'Máquinas de lavar roupa' },
+    { keywords: ['maquina de lavar', 'lavadora', 'lava e seca'], ncm: '84501110', descricao: 'MÃ¡quinas de lavar roupa' },
     { keywords: ['ar condicionado', 'split', 'climatizador'], ncm: '84151012', descricao: 'Ar condicionado' },
     { keywords: ['microondas'], ncm: '85165000', descricao: 'Fornos de micro-ondas' },
     { keywords: ['liquidificador', 'batedeira', 'processador'], ncm: '85094000', descricao: 'Liquidificadores' },
-    { keywords: ['ferro de passar', 'ferro eletrico'], ncm: '85160000', descricao: 'Ferros elétricos' },
-    { keywords: ['aspirador', 'aspirador de po'], ncm: '85081100', descricao: 'Aspiradores de pó' },
+    { keywords: ['ferro de passar', 'ferro eletrico'], ncm: '85160000', descricao: 'Ferros elÃ©tricos' },
+    { keywords: ['aspirador', 'aspirador de po'], ncm: '85081100', descricao: 'Aspiradores de pÃ³' },
     { keywords: ['ventilador'], ncm: '84145920', descricao: 'Ventiladores' },
-    { keywords: ['fogao', 'cooktop', 'forno'], ncm: '73211100', descricao: 'Fogões' },
-    // Móveis
+    { keywords: ['fogao', 'cooktop', 'forno'], ncm: '73211100', descricao: 'FogÃµes' },
+    // MÃ³veis
     { keywords: ['mesa', 'escrivaninha'], ncm: '94033000', descricao: 'Mesas' },
     { keywords: ['cadeira', 'poltrona', 'banco'], ncm: '94013000', descricao: 'Cadeiras' },
-    { keywords: ['sofa', 'diva'], ncm: '94016100', descricao: 'Sofás' },
+    { keywords: ['sofa', 'diva'], ncm: '94016100', descricao: 'SofÃ¡s' },
     { keywords: ['cama', 'beliche'], ncm: '94017900', descricao: 'Camas' },
-    { keywords: ['armario', 'guarda-roupa', 'estante'], ncm: '94036000', descricao: 'Móveis de madeira' },
-    // Saúde
+    { keywords: ['armario', 'guarda-roupa', 'estante'], ncm: '94036000', descricao: 'MÃ³veis de madeira' },
+    // SaÃºde
     { keywords: ['medicamento', 'remedio', 'comprimido', 'capsula', 'farmaco'], ncm: '30049099', descricao: 'Medicamentos' },
-    { keywords: ['mascaras', 'mascara cirurgica', 'epi'], ncm: '63079020', descricao: 'Máscaras' },
+    { keywords: ['mascaras', 'mascara cirurgica', 'epi'], ncm: '63079020', descricao: 'MÃ¡scaras' },
     { keywords: ['luva', 'luvas'], ncm: '39262000', descricao: 'Luvas' },
     // Beleza e higiene
     { keywords: ['shampoo', 'condicionador'], ncm: '33051000', descricao: 'Xampus' },
     { keywords: ['perfume', 'desodorante', 'colonia'], ncm: '33030000', descricao: 'Perfumes' },
-    { keywords: ['creme', 'hidratante', 'cosmetico', 'maquiagem'], ncm: '33049900', descricao: 'Cosméticos' },
+    { keywords: ['creme', 'hidratante', 'cosmetico', 'maquiagem'], ncm: '33049900', descricao: 'CosmÃ©ticos' },
     { keywords: ['sabonete', 'sabao'], ncm: '34011190', descricao: 'Sabonetes' },
     // Alimentos
     { keywords: ['biscoito', 'bolacha', 'cookie'], ncm: '19053100', descricao: 'Biscoitos' },
     { keywords: ['chocolate', 'bombom'], ncm: '18069000', descricao: 'Chocolates' },
-    { keywords: ['cafe', 'cafe torrado'], ncm: '09012100', descricao: 'Café' },
+    { keywords: ['cafe', 'cafe torrado'], ncm: '09012100', descricao: 'CafÃ©' },
     { keywords: ['arroz'], ncm: '10063021', descricao: 'Arroz' },
-    { keywords: ['feijao'], ncm: '07133390', descricao: 'Feijão' },
-    { keywords: ['oleo', 'oleo de soja', 'azeite'], ncm: '15079011', descricao: 'Óleos vegetais' },
-    { keywords: ['agua mineral', 'agua'], ncm: '22011000', descricao: 'Água mineral' },
+    { keywords: ['feijao'], ncm: '07133390', descricao: 'FeijÃ£o' },
+    { keywords: ['oleo', 'oleo de soja', 'azeite'], ncm: '15079011', descricao: 'Ãleos vegetais' },
+    { keywords: ['agua mineral', 'agua'], ncm: '22011000', descricao: 'Ãgua mineral' },
     { keywords: ['refrigerante', 'suco'], ncm: '22021000', descricao: 'Refrigerantes' },
-    // Ferramentas e construção
+    // Ferramentas e construÃ§Ã£o
     { keywords: ['ferramenta', 'chave de fenda', 'chave inglesa', 'alicate', 'martelo'], ncm: '82055900', descricao: 'Ferramentas manuais' },
     { keywords: ['parafuso', 'porca', 'bucha', 'rebite'], ncm: '73181500', descricao: 'Parafusos e porcas' },
     { keywords: ['tinta', 'verniz', 'esmalte'], ncm: '32091000', descricao: 'Tintas' },
     { keywords: ['cimento', 'argamassa'], ncm: '25232900', descricao: 'Cimentos' },
-    { keywords: ['cabo', 'fio eletrico', 'fio'], ncm: '85444900', descricao: 'Fios e cabos elétricos' },
+    { keywords: ['cabo', 'fio eletrico', 'fio'], ncm: '85444900', descricao: 'Fios e cabos elÃ©tricos' },
     { keywords: ['tomada', 'interruptor', 'disjuntor'], ncm: '85366990', descricao: 'Tomadas e interruptores' },
-    // Papelaria e escritório
+    // Papelaria e escritÃ³rio
     { keywords: ['papel', 'resma', 'folha'], ncm: '48025610', descricao: 'Papel' },
-    { keywords: ['caneta', 'lapis', 'marcador'], ncm: '96081000', descricao: 'Canetas esferográficas' },
+    { keywords: ['caneta', 'lapis', 'marcador'], ncm: '96081000', descricao: 'Canetas esferogrÃ¡ficas' },
     { keywords: ['caderno', 'agenda', 'bloco'], ncm: '48201000', descricao: 'Cadernos' },
     // Brinquedos e esporte
     { keywords: ['brinquedo', 'boneca', 'carrinho de crianca'], ncm: '95030000', descricao: 'Brinquedos' },
     { keywords: ['bola', 'bola de futebol', 'bola de basquete'], ncm: '95066200', descricao: 'Bolas' },
     { keywords: ['bicicleta', 'bike'], ncm: '87120010', descricao: 'Bicicletas' },
-    // Serviços (sem NCM específico — usar genérico)
-    { keywords: ['servico', 'manutencao', 'reparo', 'conserto', 'instalacao', 'montagem'], ncm: '00000000', descricao: 'Serviços em geral' },
+    // ServiÃ§os (sem NCM especÃ­fico â usar genÃ©rico)
+    { keywords: ['servico', 'manutencao', 'reparo', 'conserto', 'instalacao', 'montagem'], ncm: '00000000', descricao: 'ServiÃ§os em geral' },
   ];
 
   for (const s of suggestions) {
@@ -291,7 +291,7 @@ const gerarChaveAcesso = (
 
   const chave = `${cuf}${aamm}${cnpjClean}${mod}${serieStr}${nNFStr}${tpEmis}${cNFStr}`;
 
-  // Calcular dígito verificador (módulo 11)
+  // Calcular dÃ­gito verificador (mÃ³dulo 11)
   let soma = 0;
   let peso = 2;
   for (let i = chave.length - 1; i >= 0; i--) {
@@ -476,7 +476,7 @@ const gerarXmlNFe = (invoice: any, company: any, customer: any, items: any[]): s
 </NFe>`;
 };
 
-// ─── ROTAS PÚBLICAS ──────────────────────────────────────────────────────────
+// âââ ROTAS PÃBLICAS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', app: 'Snap Fisk' }));
 
@@ -485,7 +485,7 @@ app.get('/api/plans', async (_req, res) => {
   return res.json(plans);
 });
 
-// Sugerir NCM por descrição (mapeamento rápido)
+// Sugerir NCM por descriÃ§Ã£o (mapeamento rÃ¡pido)
 app.get('/api/ncm/suggest', (req, res) => {
   const { descricao } = req.query;
   if (!descricao || typeof descricao !== 'string') {
@@ -510,7 +510,7 @@ app.get('/api/ncm/search', (req, res) => {
 
   const termos = normalize(q).split(' ').filter(t => t.length > 1);
 
-  // Se for número, busca pelo código
+  // Se for nÃºmero, busca pelo cÃ³digo
   if (/^\d+$/.test(q.replace(/\./g, ''))) {
     const codigo = q.replace(/\./g, '');
     const results = ncmTable
@@ -520,7 +520,7 @@ app.get('/api/ncm/search', (req, res) => {
     return res.json(results);
   }
 
-  // Busca por texto — todos os termos devem aparecer
+  // Busca por texto â todos os termos devem aparecer
   const results = ncmTable
     .filter(n => {
       const desc = normalize(n.d);
@@ -532,7 +532,7 @@ app.get('/api/ncm/search', (req, res) => {
   return res.json(results);
 });
 
-// Sugestão NCM via IA
+// SugestÃ£o NCM via IA
 app.get('/api/ncm/ai-suggest', async (req, res) => {
   const { descricao } = req.query;
   if (!descricao || typeof descricao !== 'string' || descricao.length < 2) {
@@ -552,14 +552,14 @@ app.get('/api/ncm/ai-suggest', async (req, res) => {
         max_tokens: 200,
         messages: [{
           role: 'user',
-          content: `Você é um especialista em NCM (Nomenclatura Comum do Mercosul) brasileiro.
-Para o produto "${descricao}", retorne APENAS um JSON com este formato exato, sem explicações:
-{"ncm":"00000000","descricao":"descrição oficial resumida"}
+          content: `VocÃª Ã© um especialista em NCM (Nomenclatura Comum do Mercosul) brasileiro.
+Para o produto "${descricao}", retorne APENAS um JSON com este formato exato, sem explicaÃ§Ãµes:
+{"ncm":"00000000","descricao":"descriÃ§Ã£o oficial resumida"}
 
 Regras:
-- NCM deve ter exatamente 8 dígitos sem pontos
+- NCM deve ter exatamente 8 dÃ­gitos sem pontos
 - Use a tabela NCM vigente no Brasil
-- Se for serviço, use ncm "00000000"
+- Se for serviÃ§o, use ncm "00000000"
 - Retorne apenas o JSON, nada mais`
         }],
       }),
@@ -577,20 +577,20 @@ Regras:
 
     return res.json(result);
   } catch (e) {
-    console.error('Erro na sugestão NCM via IA:', e);
+    console.error('Erro na sugestÃ£o NCM via IA:', e);
     return res.json(null);
   }
 });
 
-// ─── AUTH ────────────────────────────────────────────────────────────────────
+// âââ AUTH ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 app.post('/api/auth/register', async (req, res) => {
   const p = registerSchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Dados inválidos.', details: p.error.flatten() });
+  if (!p.success) return res.status(400).json({ error: 'Dados invÃ¡lidos.', details: p.error.flatten() });
   const { cnpj, email, password } = p.data;
   const cnpjClean = cleanDoc(cnpj);
   const existing = await prisma.user.findFirst({ where: { cnpj: cnpjClean } });
-  if (existing) return res.status(409).json({ error: 'CNPJ já cadastrado.' });
+  if (existing) return res.status(409).json({ error: 'CNPJ jÃ¡ cadastrado.' });
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({ data: { cnpj: cnpjClean, email, passwordHash } });
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
@@ -599,7 +599,7 @@ app.post('/api/auth/register', async (req, res) => {
 
 app.post('/api/auth/login', async (req, res) => {
   const p = loginSchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Dados inválidos.' });
+  if (!p.success) return res.status(400).json({ error: 'Dados invÃ¡lidos.' });
   const { cnpj, password } = p.data;
   const user = await prisma.user.findUnique({ where: { cnpj: cleanDoc(cnpj) } });
   if (!user) return res.status(401).json({ error: 'CNPJ ou senha incorretos.' });
@@ -609,22 +609,22 @@ app.post('/api/auth/login', async (req, res) => {
   return res.json({ token, user: { id: user.id, cnpj: user.cnpj, email: user.email } });
 });
 
-// ─── ROTAS AUTENTICADAS ──────────────────────────────────────────────────────
+// âââ ROTAS AUTENTICADAS ââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 app.get('/api/me', authenticate, async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.userId },
     include: { company: true, subscription: { include: { plan: true } } },
   });
-  if (!user) return res.status(404).json({ error: 'Usuário não encontrado.' });
+  if (!user) return res.status(404).json({ error: 'UsuÃ¡rio nÃ£o encontrado.' });
   return res.json({ id: user.id, cnpj: user.cnpj, email: user.email, company: user.company, subscription: user.subscription });
 });
 
-// ─── EMPRESA ────────────────────────────────────────────────────────────────
+// âââ EMPRESA ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 app.post('/api/company', authenticate, async (req, res) => {
   const p = companySchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Dados inválidos.', details: p.error.flatten() });
+  if (!p.success) return res.status(400).json({ error: 'Dados invÃ¡lidos.', details: p.error.flatten() });
   const company = await prisma.company.upsert({
     where: { userId: req.userId! },
     create: { userId: req.userId!, ...p.data },
@@ -635,11 +635,11 @@ app.post('/api/company', authenticate, async (req, res) => {
 
 app.get('/api/company', authenticate, async (req, res) => {
   const company = await prisma.company.findUnique({ where: { userId: req.userId } });
-  if (!company) return res.status(404).json({ error: 'Empresa não cadastrada.' });
+  if (!company) return res.status(404).json({ error: 'Empresa nÃ£o cadastrada.' });
   return res.json(company);
 });
 
-// ─── PRODUTOS ────────────────────────────────────────────────────────────────
+// âââ PRODUTOS ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 app.get('/api/products', authenticate, async (req, res) => {
   const { q } = req.query;
@@ -656,9 +656,9 @@ app.get('/api/products', authenticate, async (req, res) => {
 
 app.post('/api/products', authenticate, async (req, res) => {
   const p = productSchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Dados inválidos.', details: p.error.flatten() });
+  if (!p.success) return res.status(400).json({ error: 'Dados invÃ¡lidos.', details: p.error.flatten() });
 
-  // Gera código automático sequencial se não informado
+  // Gera cÃ³digo automÃ¡tico sequencial se nÃ£o informado
   let codigo = p.data.codigo;
   if (!codigo) {
     const count = await prisma.product.count({ where: { userId: req.userId! } });
@@ -671,7 +671,7 @@ app.post('/api/products', authenticate, async (req, res) => {
 
 app.put('/api/products/:id', authenticate, async (req, res) => {
   const p = productSchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Dados inválidos.' });
+  if (!p.success) return res.status(400).json({ error: 'Dados invÃ¡lidos.' });
   const product = await prisma.product.updateMany({
     where: { id: req.params.id, userId: req.userId },
     data: p.data,
@@ -684,7 +684,7 @@ app.delete('/api/products/:id', authenticate, async (req, res) => {
   return res.json({ success: true });
 });
 
-// ─── CLIENTES ────────────────────────────────────────────────────────────────
+// âââ CLIENTES ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 app.get('/api/customers', authenticate, async (req, res) => {
   const { q } = req.query;
@@ -707,10 +707,10 @@ app.get('/api/customers', authenticate, async (req, res) => {
 app.post('/api/customers', authenticate, async (req, res) => {
   const p = customerSchema.safeParse(req.body);
   if (!p.success) {
-    return res.status(400).json({ error: 'Dados inválidos.', details: p.error.flatten() });
+    return res.status(400).json({ error: 'Dados invÃ¡lidos.', details: p.error.flatten() });
   }
   try {
-    // cpfCnpj já chega limpo pelo .transform() do schema
+    // cpfCnpj jÃ¡ chega limpo pelo .transform() do schema
     const customer = await prisma.customer.create({
       data: { userId: req.userId!, ...p.data },
     });
@@ -718,7 +718,7 @@ app.post('/api/customers', authenticate, async (req, res) => {
   } catch (err: any) {
     console.error('Erro ao criar cliente:', err);
     if (err.code === 'P2002') {
-      return res.status(409).json({ error: 'CPF/CNPJ já cadastrado.' });
+      return res.status(409).json({ error: 'CPF/CNPJ jÃ¡ cadastrado.' });
     }
     return res.status(500).json({ error: 'Erro ao salvar cliente.', detail: err.message });
   }
@@ -727,10 +727,10 @@ app.post('/api/customers', authenticate, async (req, res) => {
 app.put('/api/customers/:id', authenticate, async (req, res) => {
   const p = customerSchema.safeParse(req.body);
   if (!p.success) {
-    return res.status(400).json({ error: 'Dados inválidos.', details: p.error.flatten() });
+    return res.status(400).json({ error: 'Dados invÃ¡lidos.', details: p.error.flatten() });
   }
   try {
-    // cpfCnpj já chega limpo pelo .transform() do schema
+    // cpfCnpj jÃ¡ chega limpo pelo .transform() do schema
     await prisma.customer.updateMany({
       where: { id: req.params.id, userId: req.userId },
       data: { ...p.data },
@@ -747,36 +747,36 @@ app.delete('/api/customers/:id', authenticate, async (req, res) => {
   return res.json({ success: true });
 });
 
-// ─── MOTOR FISCAL ────────────────────────────────────────────────────────────
+// âââ MOTOR FISCAL ââââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 app.post('/api/fiscal-engine/query', authenticate, async (req, res) => {
   const p = fiscalQuerySchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Payload inválido.', details: p.error.flatten() });
+  if (!p.success) return res.status(400).json({ error: 'Payload invÃ¡lido.', details: p.error.flatten() });
 
-  // ── Mapeia operações de ENTRADA para equivalentes no motor fiscal ──
-  // NF-e de Entrada (tpNF=0): compra→venda, retorno→remessa(retorno), importacao→venda(importacao)
+  // ââ Mapeia operaÃ§Ãµes de ENTRADA para equivalentes no motor fiscal ââ
+  // NF-e de Entrada (tpNF=0): compraâvenda, retornoâremessa(retorno), importacaoâvenda(importacao)
   let operation = p.data.operation;
   let purpose   = p.data.purpose;
 
   if (p.data.tpNF === '0') {
     if (operation === 'compra') {
       operation = 'venda';
-      // mantém purpose (normal, substituicao_tributaria)
+      // mantÃ©m purpose (normal, substituicao_tributaria)
     } else if (operation === 'retorno') {
       operation = 'remessa';
-      purpose   = 'normal'; // retorno de remessa p/ venda → 1.904/2.904
+      purpose   = 'normal'; // retorno de remessa p/ venda â 1.904/2.904
     } else if (operation === 'importacao') {
       operation = 'venda';
       purpose   = 'importacao';
     } else if (operation === 'devolucao') {
       operation = 'devolucao';
-      purpose   = 'venda'; // devolução recebida do cliente → 1.202/2.202
+      purpose   = 'venda'; // devoluÃ§Ã£o recebida do cliente â 1.202/2.202
     }
   }
 
   const result = await resolveFiscalRule({ ...p.data, operation, purpose }, req.userId);
 
-  // Se NF de Entrada (tpNF=0), retorna o CFOP de entrada vinculado no lugar do CFOP de saída
+  // Se NF de Entrada (tpNF=0), retorna o CFOP de entrada vinculado no lugar do CFOP de saÃ­da
   if (p.data.tpNF === '0' && result.cfopEntradaVinculado) {
     return res.json({
       ...result,
@@ -796,12 +796,12 @@ app.get('/api/fiscal-engine/history', authenticate, async (req, res) => {
   return res.json(issuances);
 });
 
-// ─── EMISSÃO DE NF-E ─────────────────────────────────────────────────────────
+// âââ EMISSÃO DE NF-E âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 // Criar NF-e (rascunho)
 app.post('/api/invoices', authenticate, async (req, res) => {
   const p = invoiceSchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Dados inválidos.', details: p.error.flatten() });
+  if (!p.success) return res.status(400).json({ error: 'Dados invÃ¡lidos.', details: p.error.flatten() });
 
   const company = await prisma.company.findUnique({ where: { userId: req.userId } });
   if (!company) return res.status(400).json({ error: 'Cadastre os dados da empresa antes de emitir NF-e.' });
@@ -894,7 +894,7 @@ app.post('/api/invoices', authenticate, async (req, res) => {
     }
   }
 
-  // Avançar numeração
+  // AvanÃ§ar numeraÃ§Ã£o
   await prisma.company.update({
     where: { userId: req.userId },
     data: { proximaNF: { increment: 1 } },
@@ -920,7 +920,7 @@ app.get('/api/invoices/:id', authenticate, async (req, res) => {
     where: { id: req.params.id, userId: req.userId },
     include: { customer: true, items: { include: { product: true } } },
   });
-  if (!invoice) return res.status(404).json({ error: 'NF-e não encontrada.' });
+  if (!invoice) return res.status(404).json({ error: 'NF-e nÃ£o encontrada.' });
   return res.json(invoice);
 });
 
@@ -929,13 +929,13 @@ app.get('/api/invoices/:id/xml', authenticate, async (req, res) => {
   const invoice = await prisma.invoice.findFirst({
     where: { id: req.params.id, userId: req.userId },
   });
-  if (!invoice || !invoice.xmlGerado) return res.status(404).json({ error: 'XML não disponível.' });
+  if (!invoice || !invoice.xmlGerado) return res.status(404).json({ error: 'XML nÃ£o disponÃ­vel.' });
   res.setHeader('Content-Type', 'application/xml');
   res.setHeader('Content-Disposition', `attachment; filename="NFe_${invoice.numero}.xml"`);
   return res.send(invoice.xmlGerado);
 });
 
-// ─── PLANOS E ASSINATURA ─────────────────────────────────────────────────────
+// âââ PLANOS E ASSINATURA âââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 app.get('/api/subscription', authenticate, async (req, res) => {
   const subscription = await prisma.subscription.findUnique({
@@ -948,10 +948,10 @@ app.get('/api/subscription', authenticate, async (req, res) => {
 app.post('/api/billing/pix', authenticate, async (req, res) => {
   const { planCode } = req.body;
   if (!['SNAP_ONE', 'SNAP_TEN', 'SNAP_MEI'].includes(planCode)) {
-    return res.status(400).json({ error: 'Plano inválido.' });
+    return res.status(400).json({ error: 'Plano invÃ¡lido.' });
   }
   const plan = await prisma.plan.findUnique({ where: { code: planCode } });
-  if (!plan) return res.status(404).json({ error: 'Plano não encontrado.' });
+  if (!plan) return res.status(404).json({ error: 'Plano nÃ£o encontrado.' });
 
   let subscription = await prisma.subscription.findUnique({ where: { userId: req.userId } });
   if (!subscription) {
@@ -977,7 +977,7 @@ app.post('/api/billing/pix', authenticate, async (req, res) => {
 app.get('/api/billing/:chargeId/status', authenticate, async (req, res) => {
   const chargeId = String(req.params.chargeId);
   const charge = await prisma.billingCharge.findUnique({ where: { id: chargeId } });
-  if (!charge) return res.status(404).json({ error: 'Cobrança não encontrada.' });
+  if (!charge) return res.status(404).json({ error: 'CobranÃ§a nÃ£o encontrada.' });
   if (charge.status === 'PENDING' && charge.expiresAt && charge.expiresAt < new Date()) {
     await prisma.billingCharge.update({ where: { id: charge.id }, data: { status: 'EXPIRED' } });
     return res.json({ status: 'EXPIRED' });
@@ -988,14 +988,14 @@ app.get('/api/billing/:chargeId/status', authenticate, async (req, res) => {
 app.post('/api/billing/:chargeId/confirm', authenticate, async (req, res) => {
   const chargeId = String(req.params.chargeId);
   const charge = await prisma.billingCharge.findUnique({ where: { id: chargeId } });
-  if (!charge) return res.status(404).json({ error: 'Cobrança não encontrada.' });
-  if (charge.status !== 'PENDING') return res.status(400).json({ error: 'Cobrança não está pendente.' });
+  if (!charge) return res.status(404).json({ error: 'CobranÃ§a nÃ£o encontrada.' });
+  if (charge.status !== 'PENDING') return res.status(400).json({ error: 'CobranÃ§a nÃ£o estÃ¡ pendente.' });
 
   const subscription = await prisma.subscription.findUnique({
     where: { id: charge.subscriptionId },
     include: { plan: true },
   });
-  if (!subscription) return res.status(404).json({ error: 'Assinatura não encontrada.' });
+  if (!subscription) return res.status(404).json({ error: 'Assinatura nÃ£o encontrada.' });
 
   const now = new Date();
   const endDate = subscription.plan.code === 'SNAP_ONE'
@@ -1010,19 +1010,19 @@ app.post('/api/billing/:chargeId/confirm', authenticate, async (req, res) => {
   return res.json({ success: true, message: 'Pagamento confirmado. Plano ativado.' });
 });
 
-// ─── CATCH-ALL (SPA) ─────────────────────────────────────────────────────────
+// âââ CATCH-ALL (SPA) âââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 app.get('*', (_req, res) => {
   res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
-// ─── INICIALIZAÇÃO ───────────────────────────────────────────────────────────
+// âââ INICIALIZAÃÃO âââââââââââââââââââââââââââââââââââââââââââââââââââââââââââ
 
 const seedPlans = async () => {
   const plans = [
     { code: 'SNAP_ONE' as const, name: 'Snap One', price: 9.90, nfLimit: 1, description: 'Para quem emite pouco' },
-    { code: 'SNAP_TEN' as const, name: 'Snap Ten', price: 29.90, nfLimit: 10, description: 'Até 10 NF por mês' },
-    { code: 'SNAP_MEI' as const, name: 'Snap MEI', price: 59.90, nfLimit: -1, description: 'NF ilimitadas por mês' },
+    { code: 'SNAP_TEN' as const, name: 'Snap Ten', price: 29.90, nfLimit: 10, description: 'AtÃ© 10 NF por mÃªs' },
+    { code: 'SNAP_MEI' as const, name: 'Snap MEI', price: 59.90, nfLimit: -1, description: 'NF ilimitadas por mÃªs' },
   ];
   for (const plan of plans) {
     await prisma.plan.upsert({
