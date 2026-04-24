@@ -18,16 +18,16 @@ let ncmTable: Array<{ c: string; d: string }> = [];
 try {
   const ncmPath = path.join(process.cwd(), 'ncm_table.json');
   ncmTable = JSON.parse(fs.readFileSync(ncmPath, 'utf-8'));
-  console.log(`Ã¢ÂÂ Tabela NCM carregada: ${ncmTable.length} cÃÂ³digos`);
+  console.log(`ÃÂ¢ÃÂÃÂ Tabela NCM carregada: ${ncmTable.length} cÃÂÃÂ³digos`);
 } catch {
-  console.warn('Ã¢ÂÂ Ã¯Â¸Â ncm_table.json nÃÂ£o encontrado Ã¢ÂÂ busca NCM desabilitada');
+  console.warn('ÃÂ¢ÃÂÃÂ ÃÂ¯ÃÂ¸ÃÂ ncm_table.json nÃÂÃÂ£o encontrado ÃÂ¢ÃÂÃÂ busca NCM desabilitada');
 }
 
 // Servir frontend
 const frontendDist = path.join(process.cwd(), 'frontend', 'dist');
 app.use(express.static(frontendDist));
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ TIPOS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ TIPOS ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 declare global {
   namespace Express {
@@ -37,7 +37,7 @@ declare global {
   }
 }
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ MIDDLEWARE DE AUTENTICAÃÂÃÂO Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ MIDDLEWARE DE AUTENTICAÃÂÃÂÃÂÃÂO ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 const authenticate = (
   req: express.Request,
@@ -46,7 +46,7 @@ const authenticate = (
 ) => {
   const authHeader = req.headers.authorization;
   if (!authHeader?.startsWith('Bearer ')) {
-    return res.status(401).json({ error: 'Token nÃÂ£o informado.' });
+    return res.status(401).json({ error: 'Token nÃÂÃÂ£o informado.' });
   }
   const token = authHeader.split(' ')[1];
   try {
@@ -54,11 +54,11 @@ const authenticate = (
     req.userId = payload.userId;
     next();
   } catch {
-    return res.status(401).json({ error: 'Token invÃÂ¡lido ou expirado.' });
+    return res.status(401).json({ error: 'Token invÃÂÃÂ¡lido ou expirado.' });
   }
 };
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ SCHEMAS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ SCHEMAS ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 const registerSchema = z.object({
   cnpj: z.string().min(14).max(18),
@@ -113,7 +113,7 @@ const customerSchema = z.object({
   nome: z.string().min(1),
   ie: z.string().optional(),
   indIEDest: z.string().default('9'),
-  email: z.string().email({ message: 'E-mail invÃÂ¡lido.' }),
+  email: z.string().email({ message: 'E-mail invÃÂÃÂ¡lido.' }),
   fone: z.string().optional(),
   cep: z.string().optional(),
   logradouro: z.string().optional(),
@@ -164,19 +164,20 @@ const fiscalQuerySchema = z.object({
   operation: z.string().min(1),
   purpose: z.string().min(1),
   taxRegime: z.string().min(1),
+  tpNF: z.enum(['0', '1']).default('1'),
 });
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ HELPERS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ HELPERS ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 const cleanDoc = (doc: string) => doc.replace(/\D/g, '');
 
-// SugestÃÂ£o de NCM baseada na descriÃÂ§ÃÂ£o do produto
+// SugestÃÂÃÂ£o de NCM baseada na descriÃÂÃÂ§ÃÂÃÂ£o do produto
 const suggestNcm = (descricao: string): { ncm: string; descricao: string } | null => {
   const d = descricao.toLowerCase()
     .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // remove acentos
   const suggestions: Array<{ keywords: string[]; ncm: string; descricao: string }> = [
-    // VeÃÂ­culos e autopeÃÂ§as
-    { keywords: ['farol', 'lanterna', 'luz dianteira', 'pisca'], ncm: '85122011', descricao: 'FarÃÂ³is e projetores' },
+    // VeÃÂÃÂ­culos e autopeÃÂÃÂ§as
+    { keywords: ['farol', 'lanterna', 'luz dianteira', 'pisca'], ncm: '85122011', descricao: 'FarÃÂÃÂ³is e projetores' },
     { keywords: ['retrovisor', 'espelho retrovisor'], ncm: '70091000', descricao: 'Espelhos retrovisores' },
     { keywords: ['para-choque', 'parachoque'], ncm: '87087010', descricao: 'Para-choques' },
     { keywords: ['pneu', 'camara de ar'], ncm: '40112000', descricao: 'Pneus de borracha' },
@@ -186,82 +187,82 @@ const suggestNcm = (descricao: string): { ncm: string; descricao: string } | nul
     { keywords: ['filtro de oleo', 'filtro de ar', 'filtro de combustivel', 'filtro'], ncm: '84212300', descricao: 'Filtros' },
     { keywords: ['amortecedor', 'mola', 'suspensao'], ncm: '87088000', descricao: 'Amortecedores' },
     { keywords: ['correia', 'correia dentada', 'correia alternador'], ncm: '40103990', descricao: 'Correias' },
-    { keywords: ['vela', 'vela de ignicao', 'vela de igniÃÂ§ÃÂ£o'], ncm: '85111000', descricao: 'Velas de igniÃÂ§ÃÂ£o' },
+    { keywords: ['vela', 'vela de ignicao', 'vela de igniÃÂÃÂ§ÃÂÃÂ£o'], ncm: '85111000', descricao: 'Velas de igniÃÂÃÂ§ÃÂÃÂ£o' },
     { keywords: ['radiador', 'resfriamento'], ncm: '87089100', descricao: 'Radiadores' },
     { keywords: ['rolamento', 'cubo de roda'], ncm: '84821010', descricao: 'Rolamentos' },
     { keywords: ['escapamento', 'silencioso', 'cano de escapamento'], ncm: '87089200', descricao: 'Silenciosos e tubos de escape' },
     { keywords: ['embreagem', 'disco de embreagem'], ncm: '87083100', descricao: 'Embreagens' },
-    // Roupas e calÃÂ§ados
+    // Roupas e calÃÂÃÂ§ados
     { keywords: ['camiseta', 'camisa', 'blusa', 'regata'], ncm: '61091000', descricao: 'Camisetas de malha' },
-    { keywords: ['calca', 'bermuda', 'short', 'jeans'], ncm: '62034200', descricao: 'CalÃÂ§as de algodÃÂ£o' },
+    { keywords: ['calca', 'bermuda', 'short', 'jeans'], ncm: '62034200', descricao: 'CalÃÂÃÂ§as de algodÃÂÃÂ£o' },
     { keywords: ['vestido', 'saia'], ncm: '61044200', descricao: 'Vestidos de malha' },
     { keywords: ['casaco', 'jaqueta', 'sobretudo', 'moletom'], ncm: '61011000', descricao: 'Casacos e jaquetas' },
     { keywords: ['meia', 'meias'], ncm: '61152200', descricao: 'Meias' },
-    { keywords: ['roupa intima', 'calcinha', 'cueca', 'sutica'], ncm: '61082200', descricao: 'Roupas ÃÂ­ntimas' },
-    { keywords: ['sapato', 'tenis', 'calcado', 'chinelo', 'sandalia', 'bota'], ncm: '64041100', descricao: 'CalÃÂ§ados' },
-    // EletrÃÂ´nicos
-    { keywords: ['notebook', 'computador', 'laptop'], ncm: '84713012', descricao: 'Computadores portÃÂ¡teis' },
-    { keywords: ['celular', 'smartphone', 'iphone', 'android'], ncm: '85171231', descricao: 'Aparelhos telefÃÂ´nicos' },
+    { keywords: ['roupa intima', 'calcinha', 'cueca', 'sutica'], ncm: '61082200', descricao: 'Roupas ÃÂÃÂ­ntimas' },
+    { keywords: ['sapato', 'tenis', 'calcado', 'chinelo', 'sandalia', 'bota'], ncm: '64041100', descricao: 'CalÃÂÃÂ§ados' },
+    // EletrÃÂÃÂ´nicos
+    { keywords: ['notebook', 'computador', 'laptop'], ncm: '84713012', descricao: 'Computadores portÃÂÃÂ¡teis' },
+    { keywords: ['celular', 'smartphone', 'iphone', 'android'], ncm: '85171231', descricao: 'Aparelhos telefÃÂÃÂ´nicos' },
     { keywords: ['tablet', 'ipad'], ncm: '84713019', descricao: 'Tablets' },
-    { keywords: ['televisao', 'tv', 'televisor'], ncm: '85287210', descricao: 'Aparelhos receptores de televisÃÂ£o' },
+    { keywords: ['televisao', 'tv', 'televisor'], ncm: '85287210', descricao: 'Aparelhos receptores de televisÃÂÃÂ£o' },
     { keywords: ['monitor', 'tela'], ncm: '85285200', descricao: 'Monitores' },
     { keywords: ['impressora'], ncm: '84433200', descricao: 'Impressoras' },
     { keywords: ['teclado', 'mouse', 'periferico'], ncm: '84716000', descricao: 'Teclados e mouses' },
     { keywords: ['fone', 'headphone', 'headset', 'auricular'], ncm: '85183000', descricao: 'Fones de ouvido' },
-    { keywords: ['camera', 'webcam', 'fotografica'], ncm: '85258090', descricao: 'CÃÂ¢meras' },
-    { keywords: ['pendrive', 'usb', 'memoria flash'], ncm: '84717012', descricao: 'MemÃÂ³rias flash' },
+    { keywords: ['camera', 'webcam', 'fotografica'], ncm: '85258090', descricao: 'CÃÂÃÂ¢meras' },
+    { keywords: ['pendrive', 'usb', 'memoria flash'], ncm: '84717012', descricao: 'MemÃÂÃÂ³rias flash' },
     { keywords: ['hd', 'ssd', 'disco rigido'], ncm: '84717090', descricao: 'Unidades de disco' },
-    // EletrodomÃÂ©sticos
+    // EletrodomÃÂÃÂ©sticos
     { keywords: ['geladeira', 'refrigerador', 'freezer'], ncm: '84181021', descricao: 'Refrigeradores' },
-    { keywords: ['maquina de lavar', 'lavadora', 'lava e seca'], ncm: '84501110', descricao: 'MÃÂ¡quinas de lavar roupa' },
+    { keywords: ['maquina de lavar', 'lavadora', 'lava e seca'], ncm: '84501110', descricao: 'MÃÂÃÂ¡quinas de lavar roupa' },
     { keywords: ['ar condicionado', 'split', 'climatizador'], ncm: '84151012', descricao: 'Ar condicionado' },
     { keywords: ['microondas'], ncm: '85165000', descricao: 'Fornos de micro-ondas' },
     { keywords: ['liquidificador', 'batedeira', 'processador'], ncm: '85094000', descricao: 'Liquidificadores' },
-    { keywords: ['ferro de passar', 'ferro eletrico'], ncm: '85160000', descricao: 'Ferros elÃÂ©tricos' },
-    { keywords: ['aspirador', 'aspirador de po'], ncm: '85081100', descricao: 'Aspiradores de pÃÂ³' },
+    { keywords: ['ferro de passar', 'ferro eletrico'], ncm: '85160000', descricao: 'Ferros elÃÂÃÂ©tricos' },
+    { keywords: ['aspirador', 'aspirador de po'], ncm: '85081100', descricao: 'Aspiradores de pÃÂÃÂ³' },
     { keywords: ['ventilador'], ncm: '84145920', descricao: 'Ventiladores' },
-    { keywords: ['fogao', 'cooktop', 'forno'], ncm: '73211100', descricao: 'FogÃÂµes' },
-    // MÃÂ³veis
+    { keywords: ['fogao', 'cooktop', 'forno'], ncm: '73211100', descricao: 'FogÃÂÃÂµes' },
+    // MÃÂÃÂ³veis
     { keywords: ['mesa', 'escrivaninha'], ncm: '94033000', descricao: 'Mesas' },
     { keywords: ['cadeira', 'poltrona', 'banco'], ncm: '94013000', descricao: 'Cadeiras' },
-    { keywords: ['sofa', 'diva'], ncm: '94016100', descricao: 'SofÃÂ¡s' },
+    { keywords: ['sofa', 'diva'], ncm: '94016100', descricao: 'SofÃÂÃÂ¡s' },
     { keywords: ['cama', 'beliche'], ncm: '94017900', descricao: 'Camas' },
-    { keywords: ['armario', 'guarda-roupa', 'estante'], ncm: '94036000', descricao: 'MÃÂ³veis de madeira' },
-    // SaÃÂºde
+    { keywords: ['armario', 'guarda-roupa', 'estante'], ncm: '94036000', descricao: 'MÃÂÃÂ³veis de madeira' },
+    // SaÃÂÃÂºde
     { keywords: ['medicamento', 'remedio', 'comprimido', 'capsula', 'farmaco'], ncm: '30049099', descricao: 'Medicamentos' },
-    { keywords: ['mascaras', 'mascara cirurgica', 'epi'], ncm: '63079020', descricao: 'MÃÂ¡scaras' },
+    { keywords: ['mascaras', 'mascara cirurgica', 'epi'], ncm: '63079020', descricao: 'MÃÂÃÂ¡scaras' },
     { keywords: ['luva', 'luvas'], ncm: '39262000', descricao: 'Luvas' },
     // Beleza e higiene
     { keywords: ['shampoo', 'condicionador'], ncm: '33051000', descricao: 'Xampus' },
     { keywords: ['perfume', 'desodorante', 'colonia'], ncm: '33030000', descricao: 'Perfumes' },
-    { keywords: ['creme', 'hidratante', 'cosmetico', 'maquiagem'], ncm: '33049900', descricao: 'CosmÃÂ©ticos' },
+    { keywords: ['creme', 'hidratante', 'cosmetico', 'maquiagem'], ncm: '33049900', descricao: 'CosmÃÂÃÂ©ticos' },
     { keywords: ['sabonete', 'sabao'], ncm: '34011190', descricao: 'Sabonetes' },
     // Alimentos
     { keywords: ['biscoito', 'bolacha', 'cookie'], ncm: '19053100', descricao: 'Biscoitos' },
     { keywords: ['chocolate', 'bombom'], ncm: '18069000', descricao: 'Chocolates' },
-    { keywords: ['cafe', 'cafe torrado'], ncm: '09012100', descricao: 'CafÃÂ©' },
+    { keywords: ['cafe', 'cafe torrado'], ncm: '09012100', descricao: 'CafÃÂÃÂ©' },
     { keywords: ['arroz'], ncm: '10063021', descricao: 'Arroz' },
-    { keywords: ['feijao'], ncm: '07133390', descricao: 'FeijÃÂ£o' },
-    { keywords: ['oleo', 'oleo de soja', 'azeite'], ncm: '15079011', descricao: 'ÃÂleos vegetais' },
-    { keywords: ['agua mineral', 'agua'], ncm: '22011000', descricao: 'ÃÂgua mineral' },
+    { keywords: ['feijao'], ncm: '07133390', descricao: 'FeijÃÂÃÂ£o' },
+    { keywords: ['oleo', 'oleo de soja', 'azeite'], ncm: '15079011', descricao: 'ÃÂÃÂleos vegetais' },
+    { keywords: ['agua mineral', 'agua'], ncm: '22011000', descricao: 'ÃÂÃÂgua mineral' },
     { keywords: ['refrigerante', 'suco'], ncm: '22021000', descricao: 'Refrigerantes' },
-    // Ferramentas e construÃÂ§ÃÂ£o
+    // Ferramentas e construÃÂÃÂ§ÃÂÃÂ£o
     { keywords: ['ferramenta', 'chave de fenda', 'chave inglesa', 'alicate', 'martelo'], ncm: '82055900', descricao: 'Ferramentas manuais' },
     { keywords: ['parafuso', 'porca', 'bucha', 'rebite'], ncm: '73181500', descricao: 'Parafusos e porcas' },
     { keywords: ['tinta', 'verniz', 'esmalte'], ncm: '32091000', descricao: 'Tintas' },
     { keywords: ['cimento', 'argamassa'], ncm: '25232900', descricao: 'Cimentos' },
-    { keywords: ['cabo', 'fio eletrico', 'fio'], ncm: '85444900', descricao: 'Fios e cabos elÃÂ©tricos' },
+    { keywords: ['cabo', 'fio eletrico', 'fio'], ncm: '85444900', descricao: 'Fios e cabos elÃÂÃÂ©tricos' },
     { keywords: ['tomada', 'interruptor', 'disjuntor'], ncm: '85366990', descricao: 'Tomadas e interruptores' },
-    // Papelaria e escritÃÂ³rio
+    // Papelaria e escritÃÂÃÂ³rio
     { keywords: ['papel', 'resma', 'folha'], ncm: '48025610', descricao: 'Papel' },
-    { keywords: ['caneta', 'lapis', 'marcador'], ncm: '96081000', descricao: 'Canetas esferogrÃÂ¡ficas' },
+    { keywords: ['caneta', 'lapis', 'marcador'], ncm: '96081000', descricao: 'Canetas esferogrÃÂÃÂ¡ficas' },
     { keywords: ['caderno', 'agenda', 'bloco'], ncm: '48201000', descricao: 'Cadernos' },
     // Brinquedos e esporte
     { keywords: ['brinquedo', 'boneca', 'carrinho de crianca'], ncm: '95030000', descricao: 'Brinquedos' },
     { keywords: ['bola', 'bola de futebol', 'bola de basquete'], ncm: '95066200', descricao: 'Bolas' },
     { keywords: ['bicicleta', 'bike'], ncm: '87120010', descricao: 'Bicicletas' },
-    // ServiÃÂ§os (sem NCM especÃÂ­fico Ã¢ÂÂ usar genÃÂ©rico)
-    { keywords: ['servico', 'manutencao', 'reparo', 'conserto', 'instalacao', 'montagem'], ncm: '00000000', descricao: 'ServiÃÂ§os em geral' },
+    // ServiÃÂÃÂ§os (sem NCM especÃÂÃÂ­fico ÃÂ¢ÃÂÃÂ usar genÃÂÃÂ©rico)
+    { keywords: ['servico', 'manutencao', 'reparo', 'conserto', 'instalacao', 'montagem'], ncm: '00000000', descricao: 'ServiÃÂÃÂ§os em geral' },
   ];
 
   for (const s of suggestions) {
@@ -291,7 +292,7 @@ const gerarChaveAcesso = (
 
   const chave = `${cuf}${aamm}${cnpjClean}${mod}${serieStr}${nNFStr}${tpEmis}${cNFStr}`;
 
-  // Calcular dÃÂ­gito verificador (mÃÂ³dulo 11)
+  // Calcular dÃÂÃÂ­gito verificador (mÃÂÃÂ³dulo 11)
   let soma = 0;
   let peso = 2;
   for (let i = chave.length - 1; i >= 0; i--) {
@@ -476,7 +477,7 @@ const gerarXmlNFe = (invoice: any, company: any, customer: any, items: any[]): s
 </NFe>`;
 };
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ ROTAS PÃÂBLICAS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ ROTAS PÃÂÃÂBLICAS ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 app.get('/health', (_req, res) => res.json({ status: 'ok', app: 'Snap Fisk' }));
 
@@ -485,7 +486,7 @@ app.get('/api/plans', async (_req, res) => {
   return res.json(plans);
 });
 
-// Sugerir NCM por descriÃÂ§ÃÂ£o (mapeamento rÃÂ¡pido)
+// Sugerir NCM por descriÃÂÃÂ§ÃÂÃÂ£o (mapeamento rÃÂÃÂ¡pido)
 app.get('/api/ncm/suggest', (req, res) => {
   const { descricao } = req.query;
   if (!descricao || typeof descricao !== 'string') {
@@ -510,7 +511,7 @@ app.get('/api/ncm/search', (req, res) => {
 
   const termos = normalize(q).split(' ').filter(t => t.length > 1);
 
-  // Se for nÃÂºmero, busca pelo cÃÂ³digo
+  // Se for nÃÂÃÂºmero, busca pelo cÃÂÃÂ³digo
   if (/^\d+$/.test(q.replace(/\./g, ''))) {
     const codigo = q.replace(/\./g, '');
     const results = ncmTable
@@ -520,7 +521,7 @@ app.get('/api/ncm/search', (req, res) => {
     return res.json(results);
   }
 
-  // Busca por texto Ã¢ÂÂ todos os termos devem aparecer
+  // Busca por texto ÃÂ¢ÃÂÃÂ todos os termos devem aparecer
   const results = ncmTable
     .filter(n => {
       const desc = normalize(n.d);
@@ -532,7 +533,7 @@ app.get('/api/ncm/search', (req, res) => {
   return res.json(results);
 });
 
-// SugestÃÂ£o NCM via IA
+// SugestÃÂÃÂ£o NCM via IA
 app.get('/api/ncm/ai-suggest', async (req, res) => {
   const { descricao } = req.query;
   if (!descricao || typeof descricao !== 'string' || descricao.length < 2) {
@@ -552,14 +553,14 @@ app.get('/api/ncm/ai-suggest', async (req, res) => {
         max_tokens: 200,
         messages: [{
           role: 'user',
-          content: `VocÃÂª ÃÂ© um especialista em NCM (Nomenclatura Comum do Mercosul) brasileiro.
-Para o produto "${descricao}", retorne APENAS um JSON com este formato exato, sem explicaÃÂ§ÃÂµes:
-{"ncm":"00000000","descricao":"descriÃÂ§ÃÂ£o oficial resumida"}
+          content: `VocÃÂÃÂª ÃÂÃÂ© um especialista em NCM (Nomenclatura Comum do Mercosul) brasileiro.
+Para o produto "${descricao}", retorne APENAS um JSON com este formato exato, sem explicaÃÂÃÂ§ÃÂÃÂµes:
+{"ncm":"00000000","descricao":"descriÃÂÃÂ§ÃÂÃÂ£o oficial resumida"}
 
 Regras:
-- NCM deve ter exatamente 8 dÃÂ­gitos sem pontos
+- NCM deve ter exatamente 8 dÃÂÃÂ­gitos sem pontos
 - Use a tabela NCM vigente no Brasil
-- Se for serviÃÂ§o, use ncm "00000000"
+- Se for serviÃÂÃÂ§o, use ncm "00000000"
 - Retorne apenas o JSON, nada mais`
         }],
       }),
@@ -577,20 +578,20 @@ Regras:
 
     return res.json(result);
   } catch (e) {
-    console.error('Erro na sugestÃÂ£o NCM via IA:', e);
+    console.error('Erro na sugestÃÂÃÂ£o NCM via IA:', e);
     return res.json(null);
   }
 });
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ AUTH Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ AUTH ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 app.post('/api/auth/register', async (req, res) => {
   const p = registerSchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Dados invÃÂ¡lidos.', details: p.error.flatten() });
+  if (!p.success) return res.status(400).json({ error: 'Dados invÃÂÃÂ¡lidos.', details: p.error.flatten() });
   const { cnpj, email, password } = p.data;
   const cnpjClean = cleanDoc(cnpj);
   const existing = await prisma.user.findFirst({ where: { cnpj: cnpjClean } });
-  if (existing) return res.status(409).json({ error: 'CNPJ jÃÂ¡ cadastrado.' });
+  if (existing) return res.status(409).json({ error: 'CNPJ jÃÂÃÂ¡ cadastrado.' });
   const passwordHash = await bcrypt.hash(password, 10);
   const user = await prisma.user.create({ data: { cnpj: cnpjClean, email, passwordHash } });
   const token = jwt.sign({ userId: user.id }, JWT_SECRET, { expiresIn: '7d' });
@@ -599,7 +600,7 @@ app.post('/api/auth/register', async (req, res) => {
 
 app.post('/api/auth/login', async (req, res) => {
   const p = loginSchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Dados invÃÂ¡lidos.' });
+  if (!p.success) return res.status(400).json({ error: 'Dados invÃÂÃÂ¡lidos.' });
   const { cnpj, password } = p.data;
   const user = await prisma.user.findUnique({ where: { cnpj: cleanDoc(cnpj) } });
   if (!user) return res.status(401).json({ error: 'CNPJ ou senha incorretos.' });
@@ -609,22 +610,22 @@ app.post('/api/auth/login', async (req, res) => {
   return res.json({ token, user: { id: user.id, cnpj: user.cnpj, email: user.email } });
 });
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ ROTAS AUTENTICADAS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ ROTAS AUTENTICADAS ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 app.get('/api/me', authenticate, async (req, res) => {
   const user = await prisma.user.findUnique({
     where: { id: req.userId },
     include: { company: true, subscription: { include: { plan: true } } },
   });
-  if (!user) return res.status(404).json({ error: 'UsuÃÂ¡rio nÃÂ£o encontrado.' });
+  if (!user) return res.status(404).json({ error: 'UsuÃÂÃÂ¡rio nÃÂÃÂ£o encontrado.' });
   return res.json({ id: user.id, cnpj: user.cnpj, email: user.email, company: user.company, subscription: user.subscription });
 });
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ EMPRESA Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ EMPRESA ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 app.post('/api/company', authenticate, async (req, res) => {
   const p = companySchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Dados invÃÂ¡lidos.', details: p.error.flatten() });
+  if (!p.success) return res.status(400).json({ error: 'Dados invÃÂÃÂ¡lidos.', details: p.error.flatten() });
   const company = await prisma.company.upsert({
     where: { userId: req.userId! },
     create: { userId: req.userId!, ...p.data },
@@ -635,11 +636,11 @@ app.post('/api/company', authenticate, async (req, res) => {
 
 app.get('/api/company', authenticate, async (req, res) => {
   const company = await prisma.company.findUnique({ where: { userId: req.userId } });
-  if (!company) return res.status(404).json({ error: 'Empresa nÃÂ£o cadastrada.' });
+  if (!company) return res.status(404).json({ error: 'Empresa nÃÂÃÂ£o cadastrada.' });
   return res.json(company);
 });
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ PRODUTOS Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ PRODUTOS ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 app.get('/api/products', authenticate, async (req, res) => {
   const { q } = req.query;
@@ -656,9 +657,9 @@ app.get('/api/products', authenticate, async (req, res) => {
 
 app.post('/api/products', authenticate, async (req, res) => {
   const p = productSchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Dados invÃÂ¡lidos.', details: p.error.flatten() });
+  if (!p.success) return res.status(400).json({ error: 'Dados invÃÂÃÂ¡lidos.', details: p.error.flatten() });
 
-  // Gera cÃÂ³digo automÃÂ¡tico sequencial se nÃÂ£o informado
+  // Gera cÃÂÃÂ³digo automÃÂÃÂ¡tico sequencial se nÃÂÃÂ£o informado
   let codigo = p.data.codigo;
   if (!codigo) {
     const count = await prisma.product.count({ where: { userId: req.userId! } });
@@ -671,7 +672,7 @@ app.post('/api/products', authenticate, async (req, res) => {
 
 app.put('/api/products/:id', authenticate, async (req, res) => {
   const p = productSchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Dados invÃÂ¡lidos.' });
+  if (!p.success) return res.status(400).json({ error: 'Dados invÃÂÃÂ¡lidos.' });
   const product = await prisma.product.updateMany({
     where: { id: req.params.id, userId: req.userId },
     data: p.data,
@@ -684,7 +685,7 @@ app.delete('/api/products/:id', authenticate, async (req, res) => {
   return res.json({ success: true });
 });
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ CLIENTES Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ CLIENTES ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 app.get('/api/customers', authenticate, async (req, res) => {
   const { q } = req.query;
@@ -707,10 +708,10 @@ app.get('/api/customers', authenticate, async (req, res) => {
 app.post('/api/customers', authenticate, async (req, res) => {
   const p = customerSchema.safeParse(req.body);
   if (!p.success) {
-    return res.status(400).json({ error: 'Dados invÃÂ¡lidos.', details: p.error.flatten() });
+    return res.status(400).json({ error: 'Dados invÃÂÃÂ¡lidos.', details: p.error.flatten() });
   }
   try {
-    // cpfCnpj jÃÂ¡ chega limpo pelo .transform() do schema
+    // cpfCnpj jÃÂÃÂ¡ chega limpo pelo .transform() do schema
     const customer = await prisma.customer.create({
       data: { userId: req.userId!, ...p.data },
     });
@@ -718,7 +719,7 @@ app.post('/api/customers', authenticate, async (req, res) => {
   } catch (err: any) {
     console.error('Erro ao criar cliente:', err);
     if (err.code === 'P2002') {
-      return res.status(409).json({ error: 'CPF/CNPJ jÃÂ¡ cadastrado.' });
+      return res.status(409).json({ error: 'CPF/CNPJ jÃÂÃÂ¡ cadastrado.' });
     }
     return res.status(500).json({ error: 'Erro ao salvar cliente.', detail: err.message });
   }
@@ -727,10 +728,10 @@ app.post('/api/customers', authenticate, async (req, res) => {
 app.put('/api/customers/:id', authenticate, async (req, res) => {
   const p = customerSchema.safeParse(req.body);
   if (!p.success) {
-    return res.status(400).json({ error: 'Dados invÃÂ¡lidos.', details: p.error.flatten() });
+    return res.status(400).json({ error: 'Dados invÃÂÃÂ¡lidos.', details: p.error.flatten() });
   }
   try {
-    // cpfCnpj jÃÂ¡ chega limpo pelo .transform() do schema
+    // cpfCnpj jÃÂÃÂ¡ chega limpo pelo .transform() do schema
     await prisma.customer.updateMany({
       where: { id: req.params.id, userId: req.userId },
       data: { ...p.data },
@@ -747,36 +748,36 @@ app.delete('/api/customers/:id', authenticate, async (req, res) => {
   return res.json({ success: true });
 });
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ MOTOR FISCAL Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ MOTOR FISCAL ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 app.post('/api/fiscal-engine/query', authenticate, async (req, res) => {
   const p = fiscalQuerySchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Payload invÃÂ¡lido.', details: p.error.flatten() });
+  if (!p.success) return res.status(400).json({ error: 'Payload invÃÂÃÂ¡lido.', details: p.error.flatten() });
 
-  // Ã¢ÂÂÃ¢ÂÂ Mapeia operaÃÂ§ÃÂµes de ENTRADA para equivalentes no motor fiscal Ã¢ÂÂÃ¢ÂÂ
-  // NF-e de Entrada (tpNF=0): compraÃ¢ÂÂvenda, retornoÃ¢ÂÂremessa(retorno), importacaoÃ¢ÂÂvenda(importacao)
+  // ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ Mapeia operaÃÂÃÂ§ÃÂÃÂµes de ENTRADA para equivalentes no motor fiscal ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
+  // NF-e de Entrada (tpNF=0): compraÃÂ¢ÃÂÃÂvenda, retornoÃÂ¢ÃÂÃÂremessa(retorno), importacaoÃÂ¢ÃÂÃÂvenda(importacao)
   let operation = p.data.operation;
   let purpose   = p.data.purpose;
 
   if (p.data.tpNF === '0') {
     if (operation === 'compra') {
       operation = 'venda';
-      // mantÃÂ©m purpose (normal, substituicao_tributaria)
+      // mantÃÂÃÂ©m purpose (normal, substituicao_tributaria)
     } else if (operation === 'retorno') {
       operation = 'remessa';
-      purpose   = 'normal'; // retorno de remessa p/ venda Ã¢ÂÂ 1.904/2.904
+      purpose   = 'normal'; // retorno de remessa p/ venda ÃÂ¢ÃÂÃÂ 1.904/2.904
     } else if (operation === 'importacao') {
       operation = 'venda';
       purpose   = 'importacao';
     } else if (operation === 'devolucao') {
       operation = 'devolucao';
-      purpose   = 'venda'; // devoluÃÂ§ÃÂ£o recebida do cliente Ã¢ÂÂ 1.202/2.202
+      purpose   = 'venda'; // devoluÃÂÃÂ§ÃÂÃÂ£o recebida do cliente ÃÂ¢ÃÂÃÂ 1.202/2.202
     }
   }
 
   const result = await resolveFiscalRule({ ...p.data, operation, purpose }, req.userId);
 
-  // NF Entrada (tpNF=0): converter CFOP 5→ 1, 6→2, 7→3
+  // NF Entrada (tpNF=0): converter CFOP 5â 1, 6â2, 7â3
   if (p.data.tpNF === '0' && result.cfop) {
     let cfop = result.cfopEntradaVinculado || result.cfop;
     if (cfop.startsWith('5.')) cfop = '1.' + cfop.slice(2);
@@ -796,12 +797,12 @@ app.get('/api/fiscal-engine/history', authenticate, async (req, res) => {
   return res.json(issuances);
 });
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ EMISSÃÂO DE NF-E Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ EMISSÃÂÃÂO DE NF-E ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 // Criar NF-e (rascunho)
 app.post('/api/invoices', authenticate, async (req, res) => {
   const p = invoiceSchema.safeParse(req.body);
-  if (!p.success) return res.status(400).json({ error: 'Dados invÃÂ¡lidos.', details: p.error.flatten() });
+  if (!p.success) return res.status(400).json({ error: 'Dados invÃÂÃÂ¡lidos.', details: p.error.flatten() });
 
   const company = await prisma.company.findUnique({ where: { userId: req.userId } });
   if (!company) return res.status(400).json({ error: 'Cadastre os dados da empresa antes de emitir NF-e.' });
@@ -894,7 +895,7 @@ app.post('/api/invoices', authenticate, async (req, res) => {
     }
   }
 
-  // AvanÃÂ§ar numeraÃÂ§ÃÂ£o
+  // AvanÃÂÃÂ§ar numeraÃÂÃÂ§ÃÂÃÂ£o
   await prisma.company.update({
     where: { userId: req.userId },
     data: { proximaNF: { increment: 1 } },
@@ -920,7 +921,7 @@ app.get('/api/invoices/:id', authenticate, async (req, res) => {
     where: { id: req.params.id, userId: req.userId },
     include: { customer: true, items: { include: { product: true } } },
   });
-  if (!invoice) return res.status(404).json({ error: 'NF-e nÃÂ£o encontrada.' });
+  if (!invoice) return res.status(404).json({ error: 'NF-e nÃÂÃÂ£o encontrada.' });
   return res.json(invoice);
 });
 
@@ -929,13 +930,13 @@ app.get('/api/invoices/:id/xml', authenticate, async (req, res) => {
   const invoice = await prisma.invoice.findFirst({
     where: { id: req.params.id, userId: req.userId },
   });
-  if (!invoice || !invoice.xmlGerado) return res.status(404).json({ error: 'XML nÃÂ£o disponÃÂ­vel.' });
+  if (!invoice || !invoice.xmlGerado) return res.status(404).json({ error: 'XML nÃÂÃÂ£o disponÃÂÃÂ­vel.' });
   res.setHeader('Content-Type', 'application/xml');
   res.setHeader('Content-Disposition', `attachment; filename="NFe_${invoice.numero}.xml"`);
   return res.send(invoice.xmlGerado);
 });
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ PLANOS E ASSINATURA Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ PLANOS E ASSINATURA ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 app.get('/api/subscription', authenticate, async (req, res) => {
   const subscription = await prisma.subscription.findUnique({
@@ -948,10 +949,10 @@ app.get('/api/subscription', authenticate, async (req, res) => {
 app.post('/api/billing/pix', authenticate, async (req, res) => {
   const { planCode } = req.body;
   if (!['SNAP_ONE', 'SNAP_TEN', 'SNAP_MEI'].includes(planCode)) {
-    return res.status(400).json({ error: 'Plano invÃÂ¡lido.' });
+    return res.status(400).json({ error: 'Plano invÃÂÃÂ¡lido.' });
   }
   const plan = await prisma.plan.findUnique({ where: { code: planCode } });
-  if (!plan) return res.status(404).json({ error: 'Plano nÃÂ£o encontrado.' });
+  if (!plan) return res.status(404).json({ error: 'Plano nÃÂÃÂ£o encontrado.' });
 
   let subscription = await prisma.subscription.findUnique({ where: { userId: req.userId } });
   if (!subscription) {
@@ -977,7 +978,7 @@ app.post('/api/billing/pix', authenticate, async (req, res) => {
 app.get('/api/billing/:chargeId/status', authenticate, async (req, res) => {
   const chargeId = String(req.params.chargeId);
   const charge = await prisma.billingCharge.findUnique({ where: { id: chargeId } });
-  if (!charge) return res.status(404).json({ error: 'CobranÃÂ§a nÃÂ£o encontrada.' });
+  if (!charge) return res.status(404).json({ error: 'CobranÃÂÃÂ§a nÃÂÃÂ£o encontrada.' });
   if (charge.status === 'PENDING' && charge.expiresAt && charge.expiresAt < new Date()) {
     await prisma.billingCharge.update({ where: { id: charge.id }, data: { status: 'EXPIRED' } });
     return res.json({ status: 'EXPIRED' });
@@ -988,14 +989,14 @@ app.get('/api/billing/:chargeId/status', authenticate, async (req, res) => {
 app.post('/api/billing/:chargeId/confirm', authenticate, async (req, res) => {
   const chargeId = String(req.params.chargeId);
   const charge = await prisma.billingCharge.findUnique({ where: { id: chargeId } });
-  if (!charge) return res.status(404).json({ error: 'CobranÃÂ§a nÃÂ£o encontrada.' });
-  if (charge.status !== 'PENDING') return res.status(400).json({ error: 'CobranÃÂ§a nÃÂ£o estÃÂ¡ pendente.' });
+  if (!charge) return res.status(404).json({ error: 'CobranÃÂÃÂ§a nÃÂÃÂ£o encontrada.' });
+  if (charge.status !== 'PENDING') return res.status(400).json({ error: 'CobranÃÂÃÂ§a nÃÂÃÂ£o estÃÂÃÂ¡ pendente.' });
 
   const subscription = await prisma.subscription.findUnique({
     where: { id: charge.subscriptionId },
     include: { plan: true },
   });
-  if (!subscription) return res.status(404).json({ error: 'Assinatura nÃÂ£o encontrada.' });
+  if (!subscription) return res.status(404).json({ error: 'Assinatura nÃÂÃÂ£o encontrada.' });
 
   const now = new Date();
   const endDate = subscription.plan.code === 'SNAP_ONE'
@@ -1010,19 +1011,19 @@ app.post('/api/billing/:chargeId/confirm', authenticate, async (req, res) => {
   return res.json({ success: true, message: 'Pagamento confirmado. Plano ativado.' });
 });
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ CATCH-ALL (SPA) Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ CATCH-ALL (SPA) ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 app.get('*', (_req, res) => {
   res.sendFile(path.join(frontendDist, 'index.html'));
 });
 
-// Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂ INICIALIZAÃÂÃÂO Ã¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂÃ¢ÂÂ
+// ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ INICIALIZAÃÂÃÂÃÂÃÂO ÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂÃÂ¢ÃÂÃÂ
 
 const seedPlans = async () => {
   const plans = [
     { code: 'SNAP_ONE' as const, name: 'Snap One', price: 9.90, nfLimit: 1, description: 'Para quem emite pouco' },
-    { code: 'SNAP_TEN' as const, name: 'Snap Ten', price: 29.90, nfLimit: 10, description: 'AtÃÂ© 10 NF por mÃÂªs' },
-    { code: 'SNAP_MEI' as const, name: 'Snap MEI', price: 59.90, nfLimit: -1, description: 'NF ilimitadas por mÃÂªs' },
+    { code: 'SNAP_TEN' as const, name: 'Snap Ten', price: 29.90, nfLimit: 10, description: 'AtÃÂÃÂ© 10 NF por mÃÂÃÂªs' },
+    { code: 'SNAP_MEI' as const, name: 'Snap MEI', price: 59.90, nfLimit: -1, description: 'NF ilimitadas por mÃÂÃÂªs' },
   ];
   for (const plan of plans) {
     await prisma.plan.upsert({
