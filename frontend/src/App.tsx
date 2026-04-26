@@ -7,6 +7,7 @@ import Emit from './pages/Emit';
 import { api } from './api';
 import Company from './pages/Company';
 import Cfop from './pages/Cfop';
+import Correct from './pages/Correct';
 
 export type User = {
   id: string;
@@ -33,7 +34,7 @@ export type FiscalContext = {
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState<'home' | 'emit' | 'history' | 'plans' | 'company' | 'cfop'>('home');
+  const [tab, setTab] = useState<'home' | 'emit' | 'history' | 'plans' | 'company' | 'cfop' | 'correct'>('home');
   const [firstAccess, setFirstAccess] = useState(false);
   const [fiscalContext, setFiscalContext] = useState<FiscalContext | null>(null);
 
@@ -83,14 +84,15 @@ export default function App() {
         {tab === 'history' && <History user={user} />}
         {tab === 'plans' && <Plans user={user} onSuccess={() => setTab('home')} />}
         {tab === 'cfop' && <Cfop />}
+        {tab === 'correct' && <Correct user={user} onBack={() => setTab('history')} />}
         {tab === 'company' && <Company user={user} isFirstAccess={firstAccess} onSaved={company => { setUser(prev => prev ? { ...prev, company } : prev); setFirstAccess(false); setTab('home'); }} />}
       </main>
       <nav className="bottom-nav">
-        <button className={`nav-item ${tab === 'home' ? 'active' : ''}`} onClick={() => setTab('home')}><span className="nav-icon">🔍</span>Consultar</button>
-        <button className={`nav-item ${tab === 'cfop' ? 'active' : ''}`} onClick={() => setTab('cfop')}><span className="nav-icon">📋</span>CFOP</button>
-        <button className={`nav-item ${tab === 'history' ? 'active' : ''}`} onClick={() => setTab('history')}><span className="nav-icon">📂</span>Histórico</button>
-        <button className={`nav-item ${tab === 'plans' ? 'active' : ''}`} onClick={() => setTab('plans')}><span className="nav-icon">💳</span>Planos</button>
-        <button className={`nav-item ${tab === 'company' ? 'active' : ''}`} onClick={() => setTab('company')}><span className="nav-icon">🏢</span>Empresa</button>
+        <button className={`nav-item ${tab === 'home' ? 'active' : ''}`} onClick={() => setTab('home')}><span className="nav-icon">ð</span>Consultar</button>
+        <button className={`nav-item ${tab === 'cfop' ? 'active' : ''}`} onClick={() => setTab('cfop')}><span className="nav-icon">ð</span>CFOP</button>
+        <button className={`nav-item ${tab === 'history' ? 'active' : ''}`} onClick={() => setTab('history')}><span className="nav-icon">ð</span>HistÃ³rico</button>
+        <button className={`nav-item ${tab === 'plans' ? 'active' : ''}`} onClick={() => setTab('plans')}><span className="nav-icon">ð³</span>Planos</button>
+        <button className={`nav-item ${tab === 'company' ? 'active' : ''}`} onClick={() => setTab('company')}><span className="nav-icon">ð¢</span>Empresa</button>
       </nav>
     </div>
   );
