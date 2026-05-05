@@ -40,7 +40,7 @@ export default function App() {
   useEffect(() => {
     const token = sessionStorage.getItem('token');
     if (!token) { setLoading(false); return; }
-    api.get('/api/me').then(u => {
+    api.get('/api/auth/me').then(u => {
       setUser(u);
       if (!u.company) {
         setFirstAccess(true);
@@ -52,7 +52,7 @@ export default function App() {
   const handleLogin = async (token: string, userData: User) => {
     sessionStorage.setItem('token', token);
     try {
-      const fullUser = await api.get('/api/me');
+      const fullUser = await api.get('/api/auth/me');
       setUser(fullUser);
       if (!fullUser.company) { setFirstAccess(true); setTab('company'); }
     } catch {
