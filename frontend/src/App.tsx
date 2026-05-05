@@ -42,7 +42,7 @@ export default function App() {
     if (!token) { setLoading(false); return; }
     api.get('/api/auth/me').then(u => {
       setUser(u);
-      if (!u.company) {
+      
         setFirstAccess(true);
         setTab('company');
       }
